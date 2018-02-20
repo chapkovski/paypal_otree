@@ -1,0 +1,59 @@
+{% extends "global/Page.html" %}
+{% load staticfiles otree %}
+
+{% block title %}
+    Editing the text
+{% endblock %}
+
+{% block content %}
+<div class="well well-lg ">
+Below there is a text of instructions for a behavioral study. Please edit these instructions, correcting any
+errors in English.
+<p>Please do your corrections with a <blue>BLUE</blue> font color.</p>
+<p>If something is unclear in the text please add your comments, suggestions, questions in <red>RED</red>.</p>
+<p>If you accidently deleted the text you can always restore it by copying and pasting it from the box below.</p>
+<p>When you finish editing, click 'Next' to save the results.</p>
+
+</div>
+   z
+{% formfield player.content with label='' %}
+
+    <div class="well originalq">
+    <p><strong>Introductory part </strong><strong>&ndash;</strong><strong> group assignment</strong></p>
+<p>All participants in this study are assigned to one of two groups, the BLUE group and the RED group. To which group you will be assigned depends on the choice that you will make at the next page. This study consists of three parts. During all three parts you will remain the part of the same group (RED or BLUE depending on your choice). The decisions you will make in this study will affect your bonus payment as well as bonus payments of other participants. Some of these participants will belong to the same group as you, some to another group. In each part you will be matched with the participants with whom you were not matched in the previous parts. That means that those with whom you were matched in Part 1, will not be affected by your decisions in Part 2 and so on.</p>
+<p><strong>Part 1 </strong><strong>&ndash;</strong><strong> PD</strong></p>
+<p>Based on your choice you have been assigned to the RED group. You will remain the part of the RED group till the end of this study. We will provide now the instructions for Part 1, and then we will ask a few questions to be sure that you understand the rules.</p>
+<p>In part 1 you are matched with 5 other participants. 2 of them also belong to the RED group, 3 others belong to the BLUE group.</p>
+<p>The part 1 consists of two stages. In Stage 1 you will be paired with one of the members from BLUE group.</p>
+<p>At the beginning of stage one, both you and your partner from BLUE group get an endowment of 50 cents, which they can either withhold or transfer to the other. If a participant keeps the 50 cents to himself, he earns exactly these 50 cents. If he transfers the 50 cents to the other participant, we will triple the amount, i.e. this other participant gets 1.50 US Dollars. As soon as you and your partner from BLUE group have made choices, the respective incomes resulting from stage one are determined. There are four possibilities how yours and your partner income at Stage 1 will be affected:</p>
+<p>1): Both you and your partner from BLUE group withhold the 50 cents.</p>
+<p>Your income: 0.50$, Your partner&rsquo;s income: 0.50$</p>
+<p>2): Both you and your partner from BLUE group transfer the 50 cents.</p>
+<p>Your income: 1$, Your partner&rsquo;s income: 1$</p>
+<p>3): You transfers 50 cents and your partner from BLUE group withholds the 50 cents.</p>
+<p>Your income: 0 $, Your partner&rsquo;s income: 1.50$</p>
+<p>4): You withholds 50 cents and your partner from BLUE group transfers the 50 cents.</p>
+<p>Your income: 1.50$, Your partner&rsquo;s income: 0$</p>
+<p>After you make the decision in Stage 1, you will answer a few questions about your expectations how others will decide in this part, and then the Stage 2 begins.</p>
+<p>In Stage 2 you will observe one member of RED group to which you belong, and one member of BLUE group, who were paired together at Stage 1. Other 5 participants with whom you were matched in this Part also will observe the Stage 1 decisions of one pair (one RED and one BLUE). At the beginning of Stage 2 you will be provided with extra 0.50$ of endowment. You can either use it for reducing the payoffs of the pair whose decisions you will observe, or keep the money to yourself. For each of the participants whose decisions at stage 1 you will observe you can spend either 0 or 0.25$ to reduce their payoffs. </p>
+<p>The money you spend on decreasing payoffs of a pair whose decisions at Stage 1 you will observe will affect their payoffs in the following manner:</p>
+<ol>
+<li>If you spend 0, their payoffs at Stage 1 remain unchanged.</li>
+<li>If you spend 0.25$ to decrease the payoffs of Stage 1 for your (RED) group member, his payoff will be decreased by 0.75$.</li>
+<li>&lt;IS&gt; If you spend 0.25$ to decrease the payoffs of Stage 1 for another (BLUE) group member, his payoff will be decreased by 0.75$. &lt;CS&gt; If you spend 0.25$ to decrease the payoffs of Stage 1 for another (BLUE) group member, a computer will pick <strong>randomly </strong>one of the three BLUE group members with whom you are matched in this part, and a payoff of this <strong>random </strong>member will be decreased by 0.75$.</li>
+</ol>
+    </div>
+    {% next_button %}
+
+{% endblock %}
+
+{%  block scripts %}
+
+{% endblock %}
+{%  block styles %}
+    <style>
+    red{color:red;font-weight: bolder}
+    blue{color:blue;;font-weight: bolder}
+    </style>
+
+{% endblock %}

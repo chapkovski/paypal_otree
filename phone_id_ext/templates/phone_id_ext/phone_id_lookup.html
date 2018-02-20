@@ -1,0 +1,74 @@
+
+{% extends "global/Page.html" %}
+{% load staticfiles otree %}
+
+{% block title %}
+
+<img  alt = "Jena-Gesellschaftsstudie" src = {%  static "homepage/jena_logo.png" %} width=300px/>
+<img align = "center" alt = "Europäischer Forschungsrat" src = {%  static "homepage/erc.png" %} width=100px/>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+<h3>Herzlich Willkommen zur  Onlinestudie <br><b>„Gemeinschaft und Gesellschaft in Deutschland" </b>.</h3>
+<p><br></p>
+<h4> Bitte geben Sie hier die Identifizierungsnummer ein, die Ihnen am Telefon durchgesagt wurde.
+</h4>
+
+<form method="post">
+    {% csrf_token %}
+
+   {%  formfield form.phone_id label='' %}
+
+</form>
+
+{% if form.errors %}
+    {% for field in form %}
+        {% for error in field.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ error|escape }}</strong>
+            </div>
+        {% endfor %}
+    {% endfor %}
+    {% for error in form.non_field_errors %}
+        <div class="alert alert-danger">
+            <strong>{{ error|escape }}</strong>
+        </div>
+    {% endfor %}
+{% endif %}
+<p> Wenn Sie Probleme bei der Eingabe haben, wenden Sie sich bitte an an das Institut für Sozialwissenschaften <br>
+  der Universität Jena, welches sie unter der folgenden Telefonnummer erreichen können:
+</p>
+<h4><b> 0361/XXXXXXXXX.</b>
+</h4>
+<p><br></p>
+    {% next_button %}
+{% endblock %}
+
+{% block styles %}
+    <style>
+    input#id_phone_id{
+            display: block;
+    width: 100%;
+    font-size: 120%!important;
+    height: 44px;
+    max-width: 200px;
+    padding: 6px 12px;
+    font-size: 14px;
+    line-height: 1.428571429;
+    color: #555;
+    vertical-align: middle;
+    background-color: #fff;
+    background-image: none;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,0.075);
+    box-shadow: inset 0 1px 1px rgba(0,0,0,0.075);
+    -webkit-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+    transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+    }
+    </style>
+{% endblock %}

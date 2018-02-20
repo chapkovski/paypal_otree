@@ -1,0 +1,27 @@
+{% extends "global/Page.html" %}
+{% load staticfiles otree %}
+
+{% block title %}
+
+<img  alt = "Jena-Gesellschaftsstudie" src = {%  static "homepage/jena_logo.png" %} width=300px/>
+<img align = "center" alt = "Europäischer Forschungsrat" src = {%  static "homepage/erc.png" %} width=100px/>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+<h3>Herzlich Willkommen zur  Onlinestudie <br><b>„Gemeinschaft und Gesellschaft in Deutschland" </b>.</h3>
+<p><br></p>
+<h4> Bitte geben Sie hier die Identifizierungsnummer ein, die Ihnen am Telefon durchgesagt wurde.
+</h4>
+<p><br></p>
+<p> Wenn Sie Probleme bei der Eingabe haben, wenden Sie sich bitte an an das Institut für Sozialwissenschaften <br>
+  der Universität Jena, welches sie unter der folgenden Telefonnummer erreichen können:
+</p>
+<h4><b> 0361/XXXXXXXXX.</b>
+</h4>
+<p><br></p>
+    {% next_button %}
+{% endblock %}

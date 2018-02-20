@@ -1,0 +1,42 @@
+{% extends "otree/BaseAdmin.html" %}
+{% load staticfiles  %}
+{% block title %}
+List of linked sessions
+{% endblock %}
+
+{% block content %}
+<div class="panel panel-default">
+  <div class="panel-body">
+    The recepient's link to access the study is found <a href="{%url 'phoneid_lookup' %}">here</a>
+  </div>
+</div>
+<ul>
+    <a class="btn btn-success" role='button' href="{% url 'export_linked' %}">Export all phone codes</a>
+    <a class="btn btn-primary" href="{% url 'create_linked_session' %}" role="button">Link new session</a>
+</ul>
+
+
+{% if object_list %}
+<table class="table table-hover table-striped">
+    <tbody>
+    {% for linked_session in object_list %}
+    <tr>
+        <td><a href="{% url 'list_phone_records' linked_session.pk %}">{{linked_session.session.code}} </a></td>
+        <td><a class="btn btn-sm btn-danger" role="button" href="{% url 'delete_linked_session' linked_session.pk %}">Delete
+            link to session</a></td>
+
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<li>No linked sessions yet.</li>
+{% endif %}
+{% endblock %}
+
+{% block internal_styles %}
+
+{{ block.super }}
+
+{% endblock %}
+

@@ -1,0 +1,25 @@
+{% extends "otree/BaseAdmin.html" %}
+{% load staticfiles  %}
+{% block title %}
+Linking new session:
+{% endblock %}
+
+{% block content %}
+
+<form method="post">
+    {% csrf_token %}
+
+    {{ form.as_p }}
+
+<a href="{% url 'linked_sessions_list' %}" class="btn btn-default btn-lg " role="button">Cancel</a>
+    <button type="submit" class="btn btn-success btn-lg ">Link session</button>
+</form>
+
+{% endblock %}
+
+{% block internal_styles %}
+
+{{ block.super }}
+
+{% endblock %}
+
