@@ -7,7 +7,7 @@ import otree.settings
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
+EXTENSION_APPS=['paypal_ext']
 # the environment variable OTREE_PRODUCTION controls whether Django runs in
 # DEBUG mode. If OTREE_PRODUCTION==1, then DEBUG=False
 if environ.get('OTREE_PRODUCTION') not in {None, '', '0'}:
