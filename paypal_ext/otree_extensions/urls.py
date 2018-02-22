@@ -5,4 +5,6 @@ urlpatterns = [url(r'^linkedsession/(?P<pk>[a-zA-Z0-9_-]+)/delete/$', v.DeleteLi
                    name='delete_linked_session'),
                url(r'^linkedsession/create/$', v.CreateLinkedSessionView.as_view(),
                    name='create_linked_session'),
+               url(r'^linkedsession/(?P<pk>[a-zA-Z0-9_-]+)/$', v.DisplayLinkedSessionView.as_view(),
+                   name='list_ppp_records'),
                ]

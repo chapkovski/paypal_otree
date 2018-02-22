@@ -1,0 +1,36 @@
+{% extends "otree/BaseAdmin.html" %}
+{% load staticfiles %}
+{% block title %}
+    PPP objects for session {{ linked_session.session.code }}
+{% endblock %}
+
+{% block content %}
+
+
+    <h2>PPPs formset goes somewhere here</h2>
+
+
+    <form action="" method="post">{% csrf_token %}
+        {{ ppp_formset.management_form }}
+        <table class="table table-hover table-striped table-responsive">
+            {% for form in ppp_formset.forms %}
+                <tr>
+                    <td>{{ form.instance.participant.code }}</td>
+                    <td>{{ form.instance.amount }}</td>
+                    <td>{{ form.instance.payout_item_id }}</td>
+                    <td>{{ form.as_p }}</td>
+
+                </tr>
+            {% endfor %}
+        </table>
+        <a href="{% url 'linked_sessions_list' %}" class="btn btn-info btn-lg " role="button">Back</a>
+        <button type="submit" class="btn btn-success btn-lg">Submit</button>
+    </form>
+{% endblock %}
+
+{% block internal_styles %}
+
+    {{ block.super }}
+
+{% endblock %}
+

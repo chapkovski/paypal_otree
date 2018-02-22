@@ -16,6 +16,7 @@ from django.dispatch import receiver
 INNER_STATUSES = [
     (0, 'UNPAID'),
     (1, 'PAID'),
+    (2, 'PROCESSING'),
 ]
 
 
@@ -34,19 +35,23 @@ class PayPalPayout(djmodels.Model):
     class Meta:
         default_related_name = 'payouts'
 
+
     linked_session = djmodels.ForeignKey(to=LinkedSession, on_delete=djmodels.CASCADE, )
     participant = djmodels.ForeignKey(to=Participant, on_delete=djmodels.CASCADE, )
-    batch = djmodels.ForeignKey(to=Batch, on_delete=djmodels.CASCADE, blank=True )
-    email = djmodels.EmailField(unique=True, blank=True, )
+    batch = djmodels.ForeignKey(to=Batch, on_delete=djmodels.CASCADE, blank=True, null=True)
+    email = djmodels.EmailField(blank=True, )
     amount = models.FloatField(blank=True, null=True)
     payout_item_id = models.StringField(blank=True)
-    inner_status = models.IntegerField(choices=INNER_STATUSES, blank=True,null=True)
+    inner_status = models.IntegerField(choices=INNER_STATUSES, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    to_pay = models.BooleanField(doc='Marked as to pay, but not yet processed, inner status = PROCESSING',
+                                 initial=False)
+    paid = models.BooleanField(doc='paid, inner status PAID',
+                               initial=False)
 
     def get_absolute_url(self):
         return self.participant._url_i_should_be_on()
-
 
 # @receiver(post_save, sender=LinkedSession)
 # def create_linked_session(sender, instance, created, **kwargs):

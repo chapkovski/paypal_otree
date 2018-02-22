@@ -100,12 +100,12 @@ SESSION_CONFIG_DEFAULTS = {
 
 
 SESSION_CONFIGS = [
-    # {
-    #     'name': '...',
-    #     'display_name': '...',
-    #     'num_demo_participants': ...,
-    #     'app_sequence': ['...'],
-    # }
+    {
+        'name': 'testing_paypal',
+        'display_name': 'testing_paypal',
+        'num_demo_participants': 1,
+        'app_sequence': ['testing_paypal'],
+    }
 ]
 
 

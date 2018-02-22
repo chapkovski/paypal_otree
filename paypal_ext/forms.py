@@ -2,6 +2,7 @@ import django.forms as forms
 from .models import LinkedSession, PayPalPayout
 from otree.models import Session
 from django.core.exceptions import ObjectDoesNotExist
+from django.forms import inlineformset_factory
 
 
 class SessionChoiceField(forms.ModelChoiceField):
@@ -17,24 +18,30 @@ class SessionCreateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['session'].queryset = Session.objects.filter(linkedsession__isnull=True, is_demo=False)
+        # TODO: don't foget to filter out demo session later
+        self.fields['session'].queryset = Session.objects.filter(linkedsession__isnull=True)
         self.fields['session'].label_from_instance = lambda obj: 'code {}'.format(obj.code)
 
-#
-# class PhoneIdlLookupForm(forms.Form):
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.fields['phone_id'] = forms.IntegerField()
-#
-#     def is_valid(self):
-#         valid = super().is_valid()
-#         if not valid:
-#             return valid
-#         try:
-#             phone_record = PhoneRecord.objects.get(phone_id=self.cleaned_data['phone_id'])
-#         except ObjectDoesNotExist:
-#             self.add_error('phone_id',
-#                            "Der Code, den Sie eingegeben haben, ist nicht korrekt. Bitte versuchen Sie es noch einmal.")
-#             return False
-#
-#         return True
+
+class EmptyForm(forms.Form):
+    ...
+
+
+class PPPUpdateForm(forms.ModelForm):
+    class Meta:
+        model = PayPalPayout
+        fields = ['to_pay']
+        widgets = {
+            'to_pay': forms.CheckboxInput(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        instance = getattr(self, 'instance', None)
+        #TODO: uncomment later
+        # if instance.to_pay:
+        #     self.fields['to_pay'].disabled = True
+
+
+PPPFormSet = inlineformset_factory(LinkedSession, PayPalPayout, form=PPPUpdateForm, extra=0,
+                                   can_delete=False)
