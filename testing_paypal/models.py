@@ -5,11 +5,15 @@ from otree.api import (
 
 
 author = 'Your name here'
-
+from paypal_ext.models import  INNER_STATUSES
 doc = """
 Your app description
 """
 
+class BATCH_STATUSES(BaseConstants):
+    UNPROCESSED = 0
+    SUCCESS = 1
+    FAILED = 2
 
 class Constants(BaseConstants):
     name_in_url = 'testing_paypal'
@@ -26,4 +30,4 @@ class Group(BaseGroup):
 
 
 class Player(BasePlayer):
-    pass
+    testchoices=models.IntegerField(choices=INNER_STATUSES.choices)

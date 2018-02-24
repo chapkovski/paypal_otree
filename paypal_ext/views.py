@@ -7,7 +7,7 @@ from .models import PayPalPayout as PPP
 from django.db import transaction
 import random
 import string
-
+import paypal_ext.conf as conf
 '''
 Description of views we need here:
 * a set of CRUD for Linked sessions (already here)
@@ -81,10 +81,16 @@ class DisplayLinkedSessionView(vanilla.FormView):
 
     def form_valid(self, form):
         context = self.get_context_data()
+        linked_session=context['linked_session']
         ppps = context['ppp_formset']
         with transaction.atomic():
             if ppps.is_valid():
                 # TODO: create a batch item if there are any changes and link them to updated objects
+                batch = models.Batch.objects.create(email_subject = conf.default_email_subject,
+                                                    email_message=conf.default_email_message,
+                                                    sender_batch_id=models.Batch.get_sender_batch_id(),
+                                                    linked_session=linked_session)
+
                 # TODO: ccheck if PPP ojbects to work with, have emails, amounts, batches and payout_item_ids
                 # TODO: submit a batch to payout in paypal, check for errors, return them if any
 

@@ -7,7 +7,6 @@ from django.forms import inlineformset_factory
 
 class SessionChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, obj):
-        print('AAAA', obj)
         return obj.code
 
 
@@ -18,7 +17,7 @@ class SessionCreateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # TODO: don't foget to filter out demo session later
+        #TODO: don't foget to filter out demo session later
         self.fields['session'].queryset = Session.objects.filter(linkedsession__isnull=True)
         self.fields['session'].label_from_instance = lambda obj: 'code {}'.format(obj.code)
 
@@ -41,6 +40,8 @@ class PPPUpdateForm(forms.ModelForm):
         #TODO: uncomment later
         # if instance.to_pay:
         #     self.fields['to_pay'].disabled = True
+        if instance.email in (None,''):
+            self.fields['to_pay'].disabled = True
 
 
 PPPFormSet = inlineformset_factory(LinkedSession, PayPalPayout, form=PPPUpdateForm, extra=0,

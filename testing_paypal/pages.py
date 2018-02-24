@@ -4,7 +4,8 @@ from .models import Constants
 
 
 class MyPage(Page):
-    pass
+    form_model = 'player'
+    form_fields = ['testchoices']
 
 
 class ResultsWaitPage(WaitPage):
