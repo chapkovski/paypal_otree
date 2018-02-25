@@ -118,6 +118,9 @@ class DisplayLinkedSessionView(FormView):
                         processed_batch = paypal.create(batch)
                         # if there are any errors on paypal execution
                         if processed_batch['status'] == 'Failed':
+                            # TODO: NB!!! if there is a complete failure we have to think how to roll back, because it
+                            # TODO:  basically doesn't make to store this batch info because it has never been created
+                            # TODO: on the paypal side!!
                             paypal_error = processed_batch['error']
                             form.add_error(field=None, error=paypal_error)
                             batch.inner_status = BATCH_STATUSES.FAILED
@@ -176,6 +179,7 @@ class BatchDetailView(DetailView):
         ppps = self.object.payouts.all()
         # TODO: if batch_status': 'SUCCESS' - DO NOT REQUIRE THE UPDATE FROM PAYPAL TO NOT OVERLOAD!!
         # TODO: further on think about other statuses (like FAILURE?) which mean that there is no sense to update anymore
+        # TODO: the possible candidate is DENIED but i have no clue wwhy this can appear
         # if batch.inner_status != 'SUCCESS':
         #     updated_batch_info = paypal.get(batch)
         #     batch.update_status(updated_batch_info)
