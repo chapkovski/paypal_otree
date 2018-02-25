@@ -5,7 +5,7 @@ from otree.api import (
 
 
 author = 'Your name here'
-from paypal_ext.models import  INNER_STATUSES
+from paypal_ext.models import  PPP_STATUSES
 doc = """
 Your app description
 """
@@ -30,4 +30,4 @@ class Group(BaseGroup):
 
 
 class Player(BasePlayer):
-    testchoices=models.IntegerField(choices=INNER_STATUSES.choices)
+    testchoices=models.IntegerField(choices=PPP_STATUSES.choices)

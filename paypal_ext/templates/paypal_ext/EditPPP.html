@@ -1,47 +1,27 @@
 {% extends "otree/BaseAdmin.html" %}
 {% load staticfiles otree %}
 {% block title %}
-    PPP objects for session {{ linked_session.session.code }}
+    Edit PPP
 {% endblock %}
 
 {% block content %}
+           <form action="" method="post">{% csrf_token %}
+    <div class="m-a-md">
 
+            {{ form }}
 
-    <h2>PPPs formset goes somewhere here</h2>
-
-
-    <form action="" method="post">{% csrf_token %}
-        {{ ppp_formset.management_form }}
-        <table class="table table-hover table-striped table-responsive">
-            <thead>
-            <tr>
-                <th>Participant code:</th>
-                <th>Amount to pay:</th>
-                <th>E-mail:</th>
-                <th>To pay:</th>
-                <th>Payment status:</th>
-                <th></th>
-
-            </tr>
-            </thead>
-            {% for form in ppp_formset.forms %}
-                <tr>
-                    <td>{{ form.instance.participant.code }}</td>
-                    <td>{{ form.instance.amount }}</td>
-                    <td>{{ form.instance.email }}</td>
-                    <td>{% formfield form.to_pay label=" " %}</td>
-                    <td>{{ form.instance.transaction_status }}</td>
-                <td><a href="" role="button" class="btn btn-sm btn-dark">Edit</a></td>
-                </tr>
-            {% endfor %}
-        </table>
-        <a href="{% url 'linked_sessions_list' %}" class="btn btn-info btn-lg " role="button">Back</a>
+    </div>
+    <div>
+        <a href="{{ success_url }}" class="btn btn-info btn-lg " role="button">Back</a>
         <button type="submit" class="btn btn-success btn-lg">Submit</button>
+    </div>
     </form>
 {% endblock %}
 
 {% block internal_styles %}
-
+    <style>
+    .m-a-md{margin-bottom: 10px;}
+    </style>
     {{ block.super }}
 
 {% endblock %}

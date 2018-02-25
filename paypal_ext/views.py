@@ -1,13 +1,15 @@
 from . import models, forms
 import vanilla
-from django.core.urlresolvers import reverse_lazy
+from django.core.urlresolvers import reverse_lazy, reverse
 from .forms import SessionCreateForm, PPPFormSet
-from django.views.generic.edit import CreateView
+from django.views.generic.edit import CreateView, FormView
 from .models import PayPalPayout as PPP
 from django.db import transaction
 import random
 import string
 import paypal_ext.conf as conf
+from .paypal.create_payout import process_payout
+
 '''
 Description of views we need here:
 * a set of CRUD for Linked sessions (already here)
@@ -21,6 +23,12 @@ PPPs, and it doesn't make sense to delete them.
 
 
 '''
+
+
+def generate_random_string():
+    rstring = ''.join(
+        random.choice(string.ascii_uppercase) for i in range(12))
+    return rstring
 
 
 class CreateLinkedSessionView(CreateView):
@@ -68,38 +76,74 @@ class ListBatchesView(vanilla.ListView):
 
 # to process payments (based on PPP model). inline formset
 #  based on Linked Session as parent object, and PPPs as children
-class DisplayLinkedSessionView(vanilla.FormView):
+class DisplayLinkedSessionView(FormView):
     template_name = 'paypal_ext/LinkedSession.html'
     success_url = reverse_lazy('linked_sessions_list')
     form_class = forms.EmptyForm
 
     def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         linked_session = models.LinkedSession.objects.get(pk=self.kwargs['pk'])
-        return {'linked_session': linked_session,
-                'ppp_formset': PPPFormSet(self.request.POST or None, instance=linked_session),
-                }
+        context.update({'linked_session': linked_session,
+                        'ppp_formset': PPPFormSet(self.request.POST or None, instance=linked_session),
+                        })
+        return context
 
-    def form_valid(self, form):
-        context = self.get_context_data()
-        linked_session=context['linked_session']
-        ppps = context['ppp_formset']
-        with transaction.atomic():
-            if ppps.is_valid():
-                # TODO: create a batch item if there are any changes and link them to updated objects
-                batch = models.Batch.objects.create(email_subject = conf.default_email_subject,
-                                                    email_message=conf.default_email_message,
-                                                    sender_batch_id=models.Batch.get_sender_batch_id(),
-                                                    linked_session=linked_session)
+    def form_invalid(self, form):
+        print('SOMETHING IS WRONG', form.errors)
+        return super().form_invalid(form)
 
-                # TODO: ccheck if PPP ojbects to work with, have emails, amounts, batches and payout_item_ids
-                # TODO: submit a batch to payout in paypal, check for errors, return them if any
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if form.is_valid():
+            context = self.get_context_data()
+            linked_session = context['linked_session']
+            ppps = context['ppp_formset']
+            with transaction.atomic():
+                if ppps.is_valid():
+                    objs = ppps.save(commit=False)
+                    num_payments = sum([ppp.to_pay for ppp in objs])
+                    if num_payments > 0:
+                        batch = models.Batch.objects.create(email_subject=conf.default_email_subject,
+                                                            email_message=conf.default_email_message,
+                                                            sender_batch_id=generate_random_string(),
+                                                            linked_session=linked_session)
+                        for o in objs:
+                            o.payout_item_id = generate_random_string()
+                            o.batch = batch
+                            o.save()
 
-                objs = ppps.save(commit=False)
-                for o in objs:
-                    o.payout_item_id = ''.join(random.choice(string.ascii_lowercase) for i in range(12))
-                ppps.save()
+                        batch.batch_body = batch.get_payout_body_of_batch()
+                        batch.save()
+                        processed_batch = process_payout(batch)
+                        print('1111', processed_batch)
+                        # if there are any errors on paypal execution
+                        if processed_batch['status'] == 'Failed':
+                            form.add_error(field=None, error=processed_batch['error'])
+                            return self.form_invalid(form)
+                    ppps.save()
+                else:
+                    # if there are any errors in formset:
+                    return self.form_invalid(form)
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
 
-        return super().form_valid(form)
+
+class PPPUpdateView(vanilla.UpdateView):
+    template_name = 'paypal_ext/EditPPP.html'
+    url_name = 'edit_ppp'
+    url_pattern = r'^ppp/(?P<pk>[a-zA-Z0-9_-]+)/$'
+    model = models.PayPalPayout
+    fields = ['email', 'amount']
+
+    def get_success_url(self):
+        return reverse('list_ppp_records', kwargs={'pk': self.object.linked_session.pk})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['success_url'] = self.get_success_url()
+        return context
 
 
 # * Ajax view to update the status of batches

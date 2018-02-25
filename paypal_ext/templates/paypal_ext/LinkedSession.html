@@ -5,12 +5,15 @@
 {% endblock %}
 
 {% block content %}
+    <form action="" method="post">
+        {% csrf_token %}
+        {% if  form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
 
 
-    <h2>PPPs formset goes somewhere here</h2>
-
-
-    <form action="" method="post">{% csrf_token %}
         {{ ppp_formset.management_form }}
         <table class="table table-hover table-striped table-responsive">
             <thead>
@@ -20,7 +23,9 @@
                 <th>E-mail:</th>
                 <th>To pay:</th>
                 <th>Payment status:</th>
+                <th>Batch ID</th>
                 <th></th>
+
 
             </tr>
             </thead>
@@ -29,9 +34,14 @@
                     <td>{{ form.instance.participant.code }}</td>
                     <td>{{ form.instance.amount }}</td>
                     <td>{{ form.instance.email }}</td>
-                    <td>{% formfield form.to_pay label=" " %}</td>
-                    <td>{{ form.instance.transaction_status }}</td>
-                <td><a href="" role="button" class="btn btn-sm btn-dark">Edit</a></td>
+                    <td>{% formfield form.to_pay label=" " %}               {% for hidden in form.hidden_fields %}
+                        {{ hidden }}
+                    {% endfor %}</td>
+                    <td>{{ form.instance.get_inner_status_display }}</td>
+                    <td>{{ form.instance.batch.sender_batch_id }}</td>
+                    <td><a href="{% url 'edit_ppp' form.instance.pk %}" role="button"
+                           class="btn btn-sm btn-dark">Edit</a></td>
+
                 </tr>
             {% endfor %}
         </table>

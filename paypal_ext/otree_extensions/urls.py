@@ -8,3 +8,9 @@ urlpatterns = [url(r'^linkedsession/(?P<pk>[a-zA-Z0-9_-]+)/delete/$', v.DeleteLi
                url(r'^linkedsession/(?P<pk>[a-zA-Z0-9_-]+)/$', v.DisplayLinkedSessionView.as_view(),
                    name='list_ppp_records'),
                ]
+
+
+view_classes = [v.PPPUpdateView]
+for ViewCls in view_classes:
+    urlpatterns.append(url(ViewCls.url_pattern, ViewCls.as_view(), name=ViewCls.url_name))
+
