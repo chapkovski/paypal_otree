@@ -61,7 +61,7 @@ class Batch(djmodels.Model):
     inner_status = models.IntegerField(choices=BATCH_STATUSES.choices,
                                        default=BATCH_STATUSES.UNPROCESSED)
     linked_session = djmodels.ForeignKey(to=LinkedSession, on_delete=djmodels.CASCADE, )
-    error_message=models.LongStringField(blank=True, null=True, doc='to store errors from paypal')
+    error_message = models.LongStringField(blank=True, null=True, doc='to store errors from paypal')
 
     # TODO: add the field Body to store the request to send to paypal
     # TODO: add the field inner_status to distinguish between non-sent, failed, and succesffuly sent batches
@@ -75,12 +75,10 @@ class Batch(djmodels.Model):
         }
 
     def get_payout_items(self):
-
         return [i.get_payout_item() for i in self.payouts.all()]
 
-    def get_payout_body_of_batch(self):
+    def get_payout_body_of_batch(self, items):
         header = self.get_payout_header()
-        items = self.get_payout_items()
 
         payout = {
             "sender_batch_header": header,

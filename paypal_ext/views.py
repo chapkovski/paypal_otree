@@ -3,7 +3,7 @@ import vanilla
 from django.core.urlresolvers import reverse_lazy, reverse
 from .forms import SessionCreateForm, PPPFormSet
 from django.views.generic.edit import CreateView, FormView
-from .models import PayPalPayout as PPP
+from .models import PayPalPayout as PPP, BATCH_STATUSES, PPP_STATUSES
 from django.db import transaction
 import random
 import string
@@ -111,15 +111,19 @@ class DisplayLinkedSessionView(FormView):
                         for o in objs:
                             o.payout_item_id = generate_random_string()
                             o.batch = batch
-                            o.save()
 
-                        batch.batch_body = batch.get_payout_body_of_batch()
+                        items = [o.get_payout_item() for o in objs]
+                        print("IIIII", items)
+                        batch.batch_body = batch.get_payout_body_of_batch(items)
                         batch.save()
                         processed_batch = process_payout(batch)
-                        print('1111', processed_batch)
                         # if there are any errors on paypal execution
                         if processed_batch['status'] == 'Failed':
-                            form.add_error(field=None, error=processed_batch['error'])
+                            paypal_error=processed_batch['error']
+                            form.add_error(field=None, error=paypal_error)
+                            batch.inner_status = BATCH_STATUSES.FAILED
+                            batch.error_message=paypal_error
+                            batch.save()
                             return self.form_invalid(form)
                     ppps.save()
                 else:
