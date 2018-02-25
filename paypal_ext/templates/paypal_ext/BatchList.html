@@ -1,0 +1,34 @@
+{% extends "otree/BaseAdmin.html" %}
+{% load staticfiles %}
+{% block title %}
+    List of batches for this session
+{% endblock %}
+
+{% block content %}
+
+
+    {% if object_list %}
+        <table class="table table-hover table-striped">
+            <tbody>
+            {% for batch in object_list %}
+                <tr>
+                    <td>{{ batch.inner_status }}</td>
+                    <td><a href="{% url 'batch_detail' batch.pk %}">{{ batch.sender_batch_id }}</a></td>
+                    <td>{{ batch.payout_batch_id}}</td>
+                    <td>{{ batch.error_message }}</td>
+
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <li>No batches yet for this session.</li>
+    {% endif %}
+{% endblock %}
+
+{% block internal_styles %}
+
+    {{ block.super }}
+
+{% endblock %}
+

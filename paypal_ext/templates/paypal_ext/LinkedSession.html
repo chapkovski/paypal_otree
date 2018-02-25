@@ -5,6 +5,10 @@
 {% endblock %}
 
 {% block content %}
+    <div><h1>Batches:</h1>
+        <a href="{% url 'batches' linked_session.pk %}" role="button" class="btn btn-lg btn-info">Get all batches for
+            this session</a>
+    </div>
     <form action="" method="post">
         {% csrf_token %}
         {% if  form.non_field_errors %}
@@ -37,7 +41,7 @@
                     <td>{% formfield form.to_pay label=" " %}               {% for hidden in form.hidden_fields %}
                         {{ hidden }}
                     {% endfor %}</td>
-                    <td>{{ form.instance.get_inner_status_display }}</td>
+                    <td>{{ form.instance.transaction_status }}</td>
                     <td>{{ form.instance.batch.sender_batch_id }}</td>
                     <td><a href="{% url 'edit_ppp' form.instance.pk %}" role="button"
                            class="btn btn-sm btn-dark">Edit</a></td>
@@ -46,7 +50,7 @@
             {% endfor %}
         </table>
         <a href="{% url 'linked_sessions_list' %}" class="btn btn-info btn-lg " role="button">Back</a>
-        <button type="submit" class="btn btn-success btn-lg">Submit</button>
+        <button type="submit" class="btn btn-success btn-lg">Pay</button>
     </form>
 {% endblock %}
 

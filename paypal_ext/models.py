@@ -14,6 +14,13 @@ import random
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from otree.constants import BaseConstants
+from django.core.exceptions import ObjectDoesNotExist
+
+
+def generate_random_string(stringlength=12):
+    rstring = ''.join(
+        random.choice(string.ascii_uppercase) for i in range(stringlength))
+    return rstring
 
 
 class AttrDict(dict):
@@ -52,7 +59,7 @@ class Batch(djmodels.Model):
     payout_batch_id = models.StringField(null=True,
                                          blank=True,
                                          doc='to keep the response from Paypal.'
-                                             'exteremely important because it is pain in the ass'
+                                             'extremely important because it is pain in the ass'
                                              'to get the list of payout batches (impossible via'
                                              'current api afaik')
     batch_body = models.LongStringField(doc='to store the entire batch body just in case',
@@ -62,6 +69,25 @@ class Batch(djmodels.Model):
                                        default=BATCH_STATUSES.UNPROCESSED)
     linked_session = djmodels.ForeignKey(to=LinkedSession, on_delete=djmodels.CASCADE, )
     error_message = models.LongStringField(blank=True, null=True, doc='to store errors from paypal')
+    info = models.LongStringField(doc='to store info received from paypal.get()')
+    batch_status = models.StringField(doc='an extenral status received from paypal')
+    total_amount = models.FloatField(doc='total amount of batch (taken from paypal.get()')
+
+    def update_status(self, info):
+        self.info = info
+        print('QQQQ', info)
+        header = info['batch_header']
+        items = info['items']
+        self.batch_status = header['batch_status']
+        self.total_amount = float(header['amount']['value'])
+        for item in items:
+            payout_item_id = item['payout_item_id']
+            transaction_status = item['transaction_status']
+            email = item['payout_item']['receiver']
+            sender_item_id = item['payout_item']['sender_item_id']
+            self.payouts.filter(email=email,
+                                sender_item_id=sender_item_id).update(transaction_status=transaction_status,
+                                                                      payout_item_id=payout_item_id)
 
     # TODO: add the field Body to store the request to send to paypal
     # TODO: add the field inner_status to distinguish between non-sent, failed, and succesffuly sent batches
@@ -96,21 +122,23 @@ class PayPalPayout(djmodels.Model):
     batch = djmodels.ForeignKey(to=Batch, on_delete=djmodels.CASCADE, blank=True, null=True)
     email = djmodels.EmailField(blank=True, )
     amount = models.FloatField(blank=True, null=True)
-    payout_item_id = models.StringField(blank=True)
+    payout_item_id = models.StringField(blank=True, doc='returned id from paypal.get()')
     inner_status = models.IntegerField(choices=PPP_STATUSES.choices, blank=True, null=True,
                                        initial=PPP_STATUSES.UNPAID)
-    transaction_status = models.StringField(blank=True, initial='NOT PAID')
+    transaction_status = models.StringField(blank=True, initial='NOT PAID', doc='to get from paypal.get()')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     to_pay = models.BooleanField(doc='Marked as to pay, but not yet processed, inner status = PROCESSING',
                                  initial=False)
     paid = models.BooleanField(doc='paid, inner status PAID',
                                initial=False)
+    sender_item_id = models.StringField(blank=True, doc='sent id to paypal', )
 
     def get_absolute_url(self):
         return self.participant._url_i_should_be_on()
 
     def get_payout_item(self):
+        self.sender_item_id = generate_random_string(15)
         if self.email is None:
             return
         if self.amount is None:
@@ -123,5 +151,5 @@ class PayPalPayout(djmodels.Model):
             },
             "receiver": self.email,
             "note": "Thank you.",
-            "sender_item_id": "item_{}".format(self.pk)
+            "sender_item_id": self.sender_item_id
         }

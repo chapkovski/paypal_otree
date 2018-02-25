@@ -3,12 +3,14 @@ import vanilla
 from django.core.urlresolvers import reverse_lazy, reverse
 from .forms import SessionCreateForm, PPPFormSet
 from django.views.generic.edit import CreateView, FormView
-from .models import PayPalPayout as PPP, BATCH_STATUSES, PPP_STATUSES
+from django.views.generic.detail import DetailView
+from django.views.generic.list import ListView
+from .models import PayPalPayout as PPP, BATCH_STATUSES, PPP_STATUSES, generate_random_string
 from django.db import transaction
 import random
 import string
 import paypal_ext.conf as conf
-from .paypal.create_payout import process_payout
+import paypal_ext.paypal as paypal
 
 '''
 Description of views we need here:
@@ -23,12 +25,6 @@ PPPs, and it doesn't make sense to delete them.
 
 
 '''
-
-
-def generate_random_string():
-    rstring = ''.join(
-        random.choice(string.ascii_uppercase) for i in range(12))
-    return rstring
 
 
 class CreateLinkedSessionView(CreateView):
@@ -78,8 +74,13 @@ class ListBatchesView(vanilla.ListView):
 #  based on Linked Session as parent object, and PPPs as children
 class DisplayLinkedSessionView(FormView):
     template_name = 'paypal_ext/LinkedSession.html'
-    success_url = reverse_lazy('linked_sessions_list')
     form_class = forms.EmptyForm
+
+    def get_success_url(self):
+        if self.successful_batch:
+            return reverse('batch_detail', kwargs={'pk': self.successful_batch})
+        else:
+            return reverse_lazy('linked_sessions_list')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -90,7 +91,6 @@ class DisplayLinkedSessionView(FormView):
         return context
 
     def form_invalid(self, form):
-        print('SOMETHING IS WRONG', form.errors)
         return super().form_invalid(form)
 
     def post(self, request, *args, **kwargs):
@@ -113,18 +113,21 @@ class DisplayLinkedSessionView(FormView):
                             o.batch = batch
 
                         items = [o.get_payout_item() for o in objs]
-                        print("IIIII", items)
                         batch.batch_body = batch.get_payout_body_of_batch(items)
                         batch.save()
-                        processed_batch = process_payout(batch)
+                        processed_batch = paypal.create(batch)
                         # if there are any errors on paypal execution
                         if processed_batch['status'] == 'Failed':
-                            paypal_error=processed_batch['error']
+                            paypal_error = processed_batch['error']
                             form.add_error(field=None, error=paypal_error)
                             batch.inner_status = BATCH_STATUSES.FAILED
-                            batch.error_message=paypal_error
+                            batch.error_message = paypal_error
                             batch.save()
                             return self.form_invalid(form)
+                            # TODO: later on perhaps change pk to payout_batch_id
+                        self.successful_batch = batch.pk
+                    else:
+                        self.successful_batch = None
                     ppps.save()
                 else:
                     # if there are any errors in formset:
@@ -147,6 +150,42 @@ class PPPUpdateView(vanilla.UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['success_url'] = self.get_success_url()
+        return context
+
+
+class BatchListView(ListView):
+    template_name = 'paypal_ext/BatchList.html'
+    url_name = 'batches'
+    url_pattern = r'^linked_session/(?P<pk>[a-zA-Z0-9_-]+)/batches/$'
+    model = models.Batch
+
+    def get_queryset(self):
+        objs = models.Batch.objects.filter(linked_session__pk=self.kwargs['pk'])
+        return objs
+
+
+class BatchDetailView(DetailView):
+    template_name = 'paypal_ext/ViewBatch.html'
+    url_name = 'batch_detail'
+    url_pattern = r'^batch/(?P<pk>[a-zA-Z0-9_-]+)/$'
+    model = models.Batch
+
+    def get_context_data(self, **kwargs):
+        batch = self.object
+        context = super().get_context_data(**kwargs)
+        ppps = self.object.payouts.all()
+        # TODO: if batch_status': 'SUCCESS' - DO NOT REQUIRE THE UPDATE FROM PAYPAL TO NOT OVERLOAD!!
+        # TODO: further on think about other statuses (like FAILURE?) which mean that there is no sense to update anymore
+        # if batch.inner_status != 'SUCCESS':
+        #     updated_batch_info = paypal.get(batch)
+        #     batch.update_status(updated_batch_info)
+        # TODO: to delete two further lines later:
+        # TODO: think about those batches that WERE created but never were assigned the batch_id because of the error
+        # TODO: (such as INSUFFICIENT FUNDS or LAck of credentaionasl!!!!)
+        updated_batch_info = paypal.get(batch)
+        batch.update_status(updated_batch_info)
+        context.update({'ppps': ppps,
+                        'batch_info': batch.info})
         return context
 
 

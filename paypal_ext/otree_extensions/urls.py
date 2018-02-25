@@ -10,7 +10,7 @@ urlpatterns = [url(r'^linkedsession/(?P<pk>[a-zA-Z0-9_-]+)/delete/$', v.DeleteLi
                ]
 
 
-view_classes = [v.PPPUpdateView]
+view_classes = [v.PPPUpdateView, v.BatchDetailView, v.BatchListView]
 for ViewCls in view_classes:
     urlpatterns.append(url(ViewCls.url_pattern, ViewCls.as_view(), name=ViewCls.url_name))
 
