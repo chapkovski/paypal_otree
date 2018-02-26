@@ -8,50 +8,64 @@
     <div><h1>Batches:</h1>
         <a href="{% url 'batches' linked_session.pk %}" role="button" class="btn btn-lg btn-info">Get all batches for
             this session</a>
+        <a href="{% url 'linked_sessions_list' %}" class="btn btn-success btn-lg " role="button">Back to linked
+            sessions</a>
     </div>
-    <form action="" method="post">
-        {% csrf_token %}
-        {% if  form.non_field_errors %}
-            <div class="alert alert-danger" role="alert">
-                {{ form.non_field_errors }}
-            </div>
-        {% endif %}
+
+    {% if to_process_payments %}
+        <form action="" method="post">
+            {% csrf_token %}
+            {% if  form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
 
 
-        {{ ppp_formset.management_form }}
-        <table class="table table-hover table-striped table-responsive">
-            <thead>
-            <tr>
-                <th>Participant code:</th>
-                <th>Amount to pay:</th>
-                <th>E-mail:</th>
-                <th>To pay:</th>
-                <th>Payment status:</th>
-                <th>Batch ID</th>
-                <th></th>
-
-
-            </tr>
-            </thead>
-            {% for form in ppp_formset.forms %}
+            {{ ppp_formset.management_form }}
+            <table class="table table-hover table-striped table-responsive">
+                <thead>
                 <tr>
-                    <td>{{ form.instance.participant.code }}</td>
-                    <td>{{ form.instance.amount }}</td>
-                    <td>{{ form.instance.email }}</td>
-                    <td>{% formfield form.to_pay label=" " %}               {% for hidden in form.hidden_fields %}
-                        {{ hidden }}
-                    {% endfor %}</td>
-                    <td>{{ form.instance.transaction_status }}</td>
-                    <td>{{ form.instance.batch.sender_batch_id }}</td>
-                    <td><a href="{% url 'edit_ppp' form.instance.pk %}" role="button"
-                           class="btn btn-sm btn-dark">Edit</a></td>
+                    <th>Participant code:</th>
+                    <th>Amount to pay:</th>
+                    <th>E-mail:</th>
+                    <th width="100px">
+                        To pay
+                        <label>
+                            <input name="checkAll" type="checkbox"
+                                   value="">
+                        </label>
+
+                    </th>
+                    <th>Payment status:</th>
+                    <th>Batch ID</th>
+                    <th></th>
+
 
                 </tr>
-            {% endfor %}
-        </table>
-        <a href="{% url 'linked_sessions_list' %}" class="btn btn-info btn-lg " role="button">Back</a>
-        <button type="submit" class="btn btn-success btn-lg">Pay</button>
-    </form>
+                </thead>
+                {% for form in ppp_formset.forms %}
+                    <tr>
+                        <td>{{ form.instance.participant.code }}</td>
+                        <td>{{ form.instance.amount }}</td>
+                        <td>{{ form.instance.email }}</td>
+                        <td>{% formfield form.to_pay label=" " %}               {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}</td>
+                        <td>{{ form.instance.transaction_status }}</td>
+                        <td>{{ form.instance.batch.sender_batch_id }}</td>
+                        <td><a href="{% url 'edit_ppp' form.instance.pk %}" role="button"
+                               class="btn btn-sm btn-dark">Edit</a></td>
+
+                    </tr>
+                {% endfor %}
+            </table>
+            <a href="{% url 'linked_sessions_list' %}" class="btn btn-info btn-lg " role="button">Back to linked
+                sessions</a>
+            <button type="submit" class="btn btn-success btn-lg btn-pay" disabled>Pay</button>
+        </form>
+    {% endif %}
+    {{ processed_payments }}
 {% endblock %}
 
 {% block internal_styles %}
@@ -60,3 +74,34 @@
 
 {% endblock %}
 
+{% block internal_scripts %}
+
+    {{ block.super }}
+    <script>
+
+
+        $(function () {
+            checkFunction('to_pay', 'checkAll');
+        });
+
+        function checkFunction(checkName, checkAllName) {
+            // code for "checkAll" checkbox
+            $('input[name=' + checkAllName + ']').click(function () {
+
+                $('input.' + checkName).prop('checked', $(this).prop('checked')).trigger("change")
+            });
+            // if all checkboxes are selected check also "checkAll" checkbox
+            $('input.' + checkName).change(function () {
+                var length_all_checked =$("input." + checkName + ":checked").length;
+                var check = (length_all_checked == $("input." + checkName).length);
+                $("input[name=" + checkAllName + "]").prop('checked', check);
+                if (length_all_checked>0) {
+                    $('button.btn-pay').prop( "disabled", false );
+                } else {
+                    $('button.btn-pay').prop( "disabled", true );
+                };
+            })
+        }
+    </script>
+
+{% endblock %}

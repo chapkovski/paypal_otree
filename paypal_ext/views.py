@@ -5,12 +5,16 @@ from .forms import SessionCreateForm, PPPFormSet
 from django.views.generic.edit import CreateView, FormView
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
-from .models import PayPalPayout as PPP, BATCH_STATUSES, PPP_STATUSES, generate_random_string
+from .models import (PayPalPayout as PPP, BATCH_STATUSES, PPP_STATUSES, generate_random_string, FailedBatch, Batch,
+                     BATCH_IGNORED_STATUSES)
 from django.db import transaction
 import random
 import string
 import paypal_ext.conf as conf
 import paypal_ext.paypal as paypal
+from django.db.models import Q
+
+debug_emails = ['chapkovksi@gmail.com', 'anna.s.ivanova@gmail.com']
 
 '''
 Description of views we need here:
@@ -39,7 +43,9 @@ class CreateLinkedSessionView(CreateView):
         session = form.instance.session
         for p in session.get_participants():
             ppp = p.payouts.create(linked_session=cur_linked_session,
-                                   amount=p.payoff_plus_participation_fee())
+                                   amount=p.payoff_plus_participation_fee(),
+                                   email=random.choice(debug_emails)
+                                   )
         # form.instance.created_by = self.request.user
         return super().form_valid(form)
 
@@ -85,8 +91,15 @@ class DisplayLinkedSessionView(FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         linked_session = models.LinkedSession.objects.get(pk=self.kwargs['pk'])
+        q = linked_session.payouts.filter(transaction_status='NOT PAID').exclude(
+            Q(email__isnull=True) | Q(email__exact='') | Q(amount__isnull=True))
+        processed_ppps = linked_session.payouts.exclude(transaction_status='NOT PAID')
         context.update({'linked_session': linked_session,
-                        'ppp_formset': PPPFormSet(self.request.POST or None, instance=linked_session),
+                        'ppp_formset': PPPFormSet(self.request.POST or None,
+                                                  instance=linked_session,
+                                                  queryset=q),
+                        'processed_payments': processed_ppps,
+                        'to_process_payments': q,
                         })
         return context
 
@@ -104,10 +117,10 @@ class DisplayLinkedSessionView(FormView):
                     objs = ppps.save(commit=False)
                     num_payments = sum([ppp.to_pay for ppp in objs])
                     if num_payments > 0:
-                        batch = models.Batch.objects.create(email_subject=conf.default_email_subject,
-                                                            email_message=conf.default_email_message,
-                                                            sender_batch_id=generate_random_string(),
-                                                            linked_session=linked_session)
+                        batch = Batch.objects.create(email_subject=conf.default_email_subject,
+                                                     email_message=conf.default_email_message,
+                                                     sender_batch_id=generate_random_string(),
+                                                     linked_session=linked_session)
                         for o in objs:
                             o.payout_item_id = generate_random_string()
                             o.batch = batch
@@ -118,18 +131,18 @@ class DisplayLinkedSessionView(FormView):
                         processed_batch = paypal.create(batch)
                         # if there are any errors on paypal execution
                         if processed_batch['status'] == 'Failed':
-                            # TODO: NB!!! if there is a complete failure we have to think how to roll back, because it
-                            # TODO:  basically doesn't make to store this batch info because it has never been created
-                            # TODO: on the paypal side!!
+                            # we store info about failed batches JIC
                             paypal_error = processed_batch['error']
+                            FailedBatch.objects.create(error_message=paypal_error,
+                                                       error_level=processed_batch['error_level'])
                             form.add_error(field=None, error=paypal_error)
-                            batch.inner_status = BATCH_STATUSES.FAILED
-                            batch.error_message = paypal_error
-                            batch.save()
+                            batch.delete()
                             return self.form_invalid(form)
-                            # TODO: later on perhaps change pk to payout_batch_id
+                        # TODO: later on perhaps change pk to payout_batch_id
                         self.successful_batch = batch.pk
                     else:
+                        # if somebody submits the form without any payments
+                        # unlikely to happen but JIC
                         self.successful_batch = None
                     ppps.save()
                 else:
@@ -163,8 +176,18 @@ class BatchListView(ListView):
     model = models.Batch
 
     def get_queryset(self):
-        objs = models.Batch.objects.filter(linked_session__pk=self.kwargs['pk'])
+        objs = Batch.objects.filter(linked_session__pk=self.kwargs['pk'])
         return objs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        batches = self.get_queryset()
+        infoall = []
+        for b in batches:
+            if b.batch_status not in BATCH_IGNORED_STATUSES:
+                infoall.append(paypal.get(b, header_only=True))
+        context['infoall'] = infoall
+        return context
 
 
 class BatchDetailView(DetailView):
@@ -174,20 +197,12 @@ class BatchDetailView(DetailView):
     model = models.Batch
 
     def get_context_data(self, **kwargs):
-        batch = self.object
+        batch = self.get_object()
         context = super().get_context_data(**kwargs)
         ppps = self.object.payouts.all()
-        # TODO: if batch_status': 'SUCCESS' - DO NOT REQUIRE THE UPDATE FROM PAYPAL TO NOT OVERLOAD!!
-        # TODO: further on think about other statuses (like FAILURE?) which mean that there is no sense to update anymore
-        # TODO: the possible candidate is DENIED but i have no clue wwhy this can appear
-        # if batch.inner_status != 'SUCCESS':
-        #     updated_batch_info = paypal.get(batch)
-        #     batch.update_status(updated_batch_info)
-        # TODO: to delete two further lines later:
-        # TODO: think about those batches that WERE created but never were assigned the batch_id because of the error
-        # TODO: (such as INSUFFICIENT FUNDS or LAck of credentaionasl!!!!)
-        updated_batch_info = paypal.get(batch)
-        batch.update_status(updated_batch_info)
+        if batch.batch_status not in BATCH_IGNORED_STATUSES:
+            updated_batch_info = paypal.get(batch)
+            batch.update_status(updated_batch_info)
         context.update({'ppps': ppps,
                         'batch_info': batch.info})
         return context

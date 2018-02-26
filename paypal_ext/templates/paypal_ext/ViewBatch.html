@@ -10,8 +10,9 @@
         <div class="card-body">
             {{ batch_info }}
             <h5 class="card-title">Batch info:</h5>
-            <p class="card-text">.</p>
-            <p class="card-text">.</p>
+            <p class="card-text">{{ object.pk }}</p>
+            <p class="card-text">{{ object.total_amount }}</p>
+            <p class="card-text">{{ object.batch_status }}</p>
             <p class="card-text">.</p>
 
         </div>

@@ -16,6 +16,9 @@ from django.dispatch import receiver
 from otree.constants import BaseConstants
 from django.core.exceptions import ObjectDoesNotExist
 
+# if a batch has one of these statuses, we don't update them anymore requesting info
+# via paypal, because it doesn't make sense, they are finalized.
+BATCH_IGNORED_STATUSES = ['SUCCESS', 'DENIED']
 
 def generate_random_string(stringlength=12):
     rstring = ''.join(
@@ -52,6 +55,11 @@ class LinkedSession(djmodels.Model):
     session = djmodels.OneToOneField(to=Session, on_delete=djmodels.CASCADE)
 
 
+class FailedBatch(djmodels.Model):
+    error_message = models.LongStringField(blank=True, null=True, doc='to store errors from paypal')
+    error_level = models.StringField(doc='to store level of failure (see payout.create() for details')
+
+
 class Batch(djmodels.Model):
     email_subject = models.StringField()
     email_message = models.StringField()
@@ -68,18 +76,22 @@ class Batch(djmodels.Model):
     inner_status = models.IntegerField(choices=BATCH_STATUSES.choices,
                                        default=BATCH_STATUSES.UNPROCESSED)
     linked_session = djmodels.ForeignKey(to=LinkedSession, on_delete=djmodels.CASCADE, )
-    error_message = models.LongStringField(blank=True, null=True, doc='to store errors from paypal')
+
     info = models.LongStringField(doc='to store info received from paypal.get()')
     batch_status = models.StringField(doc='an extenral status received from paypal')
     total_amount = models.FloatField(doc='total amount of batch (taken from paypal.get()')
 
+    def count_recipients(self):
+        print("AAAAA", len(self.payouts.all()))
+        return self.payouts.all().count()
+
     def update_status(self, info):
-        self.info = info
-        print('QQQQ', info)
+        self.info = str(info)
         header = info['batch_header']
         items = info['items']
         self.batch_status = header['batch_status']
         self.total_amount = float(header['amount']['value'])
+        self.save()
         for item in items:
             payout_item_id = item['payout_item_id']
             transaction_status = item['transaction_status']
@@ -119,7 +131,8 @@ class PayPalPayout(djmodels.Model):
 
     linked_session = djmodels.ForeignKey(to=LinkedSession, on_delete=djmodels.CASCADE, )
     participant = djmodels.ForeignKey(to=Participant, on_delete=djmodels.CASCADE, )
-    batch = djmodels.ForeignKey(to=Batch, on_delete=djmodels.CASCADE, blank=True, null=True)
+    # we set on_delete to NULL because we need to delete failed batches without touching ppp object connected.
+    batch = djmodels.ForeignKey(to=Batch, on_delete=djmodels.SET_NULL, blank=True, null=True)
     email = djmodels.EmailField(blank=True, )
     amount = models.FloatField(blank=True, null=True)
     payout_item_id = models.StringField(blank=True, doc='returned id from paypal.get()')

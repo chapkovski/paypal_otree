@@ -41,21 +41,19 @@ class PPPUpdateForm(forms.ModelForm):
             return
         if obj.inner_status is not PPP_STATUSES.UNPAID:
             return
-        # TODO: unncomment later!!!!
-        # if obj.to_pay:
-        #     return
+
         return True
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         instance = getattr(self, 'instance', None)
+        self.fields['to_pay'].widget.attrs['class'] = 'to_pay'
         if not self.check_conditions(instance):
             self.fields['to_pay'].disabled = True
 
     def clean(self):
         super().clean()
         obj = self.instance
-        print('QQQQ', self.changed_data)
         if not self.check_conditions(obj) and 'to_pay' in self.changed_data:
             self.add_error('to_pay', 'Something is wrong with this payment!')
 

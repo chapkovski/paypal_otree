@@ -6,17 +6,24 @@
 
 {% block content %}
 
-
+{{ infoall }}
     {% if object_list %}
         <table class="table table-hover table-striped">
+        <thead>
+        <th>sender_batch_id</th>
+        <th>payout_batch_id</th>
+        <th>total_amount</th>
+        <th>batch_status</th>
+        <th>number of recipients</th>
+        </thead>
             <tbody>
             {% for batch in object_list %}
                 <tr>
-                    <td>{{ batch.inner_status }}</td>
                     <td><a href="{% url 'batch_detail' batch.pk %}">{{ batch.sender_batch_id }}</a></td>
-                    <td>{{ batch.payout_batch_id}}</td>
-                    <td>{{ batch.error_message }}</td>
-
+                    <td><a href="{% url 'batch_detail' batch.pk %}">{{ batch.payout_batch_id }}</a></td>
+                    <td>{{ batch.total_amount}}</td>
+                    <td>{{ batch.batch_status}}</td>
+                    <td>{{ batch.count_recipients}}</td>
                 </tr>
             {% endfor %}
             </tbody>
