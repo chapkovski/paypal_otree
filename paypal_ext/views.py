@@ -183,6 +183,8 @@ class BatchListView(ListView):
         context = super().get_context_data(**kwargs)
         batches = self.get_queryset()
         infoall = []
+        #TODO: update the batch statuses if not ignored
+        # TODO (they are requested but not updated now) which is weird
         for b in batches:
             if b.batch_status not in BATCH_IGNORED_STATUSES:
                 infoall.append(paypal.get(b, header_only=True))
