@@ -1,4 +1,6 @@
 from django.db import models as djmodels
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 from otree.api import models
 from random import randint
 import string
@@ -101,7 +103,7 @@ class Batch(djmodels.Model):
                                 sender_item_id=sender_item_id).update(transaction_status=transaction_status,
                                                                       payout_item_id=payout_item_id)
 
-    # TODO: add the field Body to store the request to send to paypal
+
     # TODO: add the field inner_status to distinguish between non-sent, failed, and succesffuly sent batches
 
 
@@ -166,3 +168,20 @@ class PayPalPayout(djmodels.Model):
             "note": "Thank you.",
             "sender_item_id": self.sender_item_id
         }
+
+
+# This is to guarantee that linked session will never be deleted if there is at least one ppp in status **NOT**
+# Not Paid. Using signals presumably more safe than override delete method on LinkedSession model because bulk_delete
+# does not call delete method (god knows if this is worth the efforts - who uses bulk delete after alL? but JIC)
+
+
+class PaidPPPExistsException(Exception):
+    pass
+
+
+@receiver(pre_delete, sender=LinkedSession)
+def check_if_ppp_paid(sender, instance, *args, **kwargs):
+    for p in instance.payouts.all():
+        if p.transaction_status != 'NOT PAID':
+            raise PaidPPPExistsException('Can\'t delete the linked session with the processed payment')
+    print("MOTHERFUCKA YOU ARE DELEITING LINK ESSESION DAMN", args, kwargs)

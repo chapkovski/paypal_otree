@@ -4,6 +4,7 @@ from otree.models import Session
 from django.core.exceptions import ObjectDoesNotExist
 from django.forms import inlineformset_factory
 
+from django.core.validators import MinValueValidator,MaxValueValidator
 
 class SessionChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, obj):
@@ -25,8 +26,23 @@ class SessionCreateForm(forms.ModelForm):
 class EmptyForm(forms.Form):
     ...
 
-
 class PPPUpdateForm(forms.ModelForm):
+    class Meta:
+        model = PayPalPayout
+        fields = ['email', 'amount']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].required=True
+        self.fields['amount'].required = True
+        self.fields['amount'].widget.attrs['min'] = 0
+        # theoretically we can process an unlimited amount via paypal but let's be reasonable
+        self.fields['amount'].widget.attrs['max'] = 100
+        self.fields['amount'].validators = [MinValueValidator(0), MaxValueValidator(100)]
+
+
+
+class PPPPayForm(forms.ModelForm):
     class Meta:
         model = PayPalPayout
         fields = ['to_pay']
@@ -58,5 +74,5 @@ class PPPUpdateForm(forms.ModelForm):
             self.add_error('to_pay', 'Something is wrong with this payment!')
 
 
-PPPFormSet = inlineformset_factory(LinkedSession, PayPalPayout, form=PPPUpdateForm, extra=0,
+PPPFormSet = inlineformset_factory(LinkedSession, PayPalPayout, form=PPPPayForm, extra=0,
                                    can_delete=False)

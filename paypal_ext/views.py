@@ -2,7 +2,7 @@ from . import models, forms
 import vanilla
 from django.core.urlresolvers import reverse_lazy, reverse
 from .forms import SessionCreateForm, PPPFormSet
-from django.views.generic.edit import CreateView, FormView
+from django.views.generic.edit import CreateView, FormView, DeleteView
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from .models import (PayPalPayout as PPP, BATCH_STATUSES, PPP_STATUSES, generate_random_string, FailedBatch, Batch,
@@ -51,10 +51,19 @@ class CreateLinkedSessionView(CreateView):
 
 
 # to delete linked session
-class DeleteLinkedSessionView(vanilla.DeleteView):
+class DeleteLinkedSessionView(DeleteView):
     model = models.LinkedSession
     template_name = 'paypal_ext/LinkedSessionDelete.html'
     success_url = reverse_lazy('linked_sessions_list')
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        are_paid = self.object.payouts.exclude(transaction_status='NOT PAID').exists()
+        if are_paid:
+            context = self.get_context_data(**kwargs)
+            context['error'] = 'Sorry, cannot delete the linked session, there are already some payouts made!'
+            return self.render_to_response(context)
+        return super().delete(request, *args, **kwargs)
 
 
 # view to show linked session
@@ -158,7 +167,7 @@ class PPPUpdateView(vanilla.UpdateView):
     url_name = 'edit_ppp'
     url_pattern = r'^ppp/(?P<pk>[a-zA-Z0-9_-]+)/$'
     model = models.PayPalPayout
-    fields = ['email', 'amount']
+    form_class = forms.PPPUpdateForm
 
     def get_success_url(self):
         return reverse('list_ppp_records', kwargs={'pk': self.object.linked_session.pk})
@@ -183,7 +192,7 @@ class BatchListView(ListView):
         context = super().get_context_data(**kwargs)
         batches = self.get_queryset()
         infoall = []
-        #TODO: update the batch statuses if not ignored
+        # TODO: update the batch statuses if not ignored
         # TODO (they are requested but not updated now) which is weird
         for b in batches:
             if b.batch_status not in BATCH_IGNORED_STATUSES:
