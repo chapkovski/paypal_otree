@@ -1,0 +1,54 @@
+{% extends "otree/BaseAdmin.html" %}
+{% load staticfiles otree %}
+{% block title %}
+    PPP Details
+{% endblock %}
+
+{% block content %}
+    {% if error %}
+        <div class="alert alert-danger" role="alert">
+            Can't update the status: check PayPal credentials and connection
+        </div>
+    {% endif %}
+
+    {{ info|safe }}
+
+    <table class="table table-hover table-striped">
+    <tbody>
+    <tr>
+        <td>Payout Id</td>
+        <td>{{ payout_item_id }}</td>
+    </tr>
+        <tr>
+        <td>Transaction status</td>
+        <td>{{ transaction_status }}</td>
+    </tr>
+        <tr>
+        <td>Fee</td>
+        <td>{{payout_item_fee}}</td>
+    </tr>
+        <tr>
+        <td>Amount</td>
+        <td>{{ amount }}</td>
+    </tr>
+        <tr>
+        <td>Receiver</td>
+        <td>{{ receiver }}</td>
+    </tr>
+        <tr>
+        <td>Time Processed</td>
+        <td>{{ time_processed }}</td>
+    </tr>
+    </tbody>
+    </table>
+    <a href="{{ view.get_success_url }}" class="btn btn-info btn-lg " role="button">Back</a>
+
+
+{% endblock %}
+
+{% block internal_styles %}
+
+    {{ block.super }}
+
+{% endblock %}
+

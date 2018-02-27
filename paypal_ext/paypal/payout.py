@@ -1,4 +1,4 @@
-from paypalrestsdk import Payout, ResourceNotFound
+from paypalrestsdk import Payout, ResourceNotFound, PayoutItem
 from paypalrestsdk.exceptions import MissingConfig
 import paypalrestsdk
 
@@ -26,13 +26,16 @@ def create(batch):
                 'error': e}
 
 
-def get(batch, header_only=False):
-    # TODO: delete this - for developing only
-    paypalrestsdk.configure({
-        "mode": "sandbox",  # sandbox or live
-        "client_id": "AX3_V5iIbPLsEa_71d-pbfN2InBlMQPxTKqtwTMd1YxUxjxeIay75W6akP1ikLQ-4TpHMOoW7S-e5LOc",
-        "client_secret": "EDuF-9rMsyA0PukAJ2BGNZingJ0GGsYoJ67hWTzRB9VtaBnaLRPLKSpYoIy25NjxEHZXZ7lYdZPh8v1B"})
+def get(payout_batch_id, header_only=False):
+
     try:
+        # TODO: delete this - for developing only
+        # TODO: when go live let's clean this mess with authetification
+        paypalrestsdk.configure({
+            "mode": "sandbox",  # sandbox or live
+            "client_id": "AX3_V5iIbPLsEa_71d-pbfN2InBlMQPxTKqtwTMd1YxUxjxeIay75W6akP1ikLQ-4TpHMOoW7S-e5LOc",
+            "client_secret": "EDuF-9rMsyA0PukAJ2BGNZingJ0GGsYoJ67hWTzRB9VtaBnaLRPLKSpYoIy25NjxEHZXZ7lYdZPh8v1B"})
+
 
         PAYPAL_MODE = 'sandbox'  # sandbox or live
         CLIENT_ID = 'AX3_V5iIbPLsEa_71d-pbfN2InBlMQPxTKqtwTMd1YxUxjxeIay75W6akP1ikLQ-4TpHMOoW7S-e5LOc'
@@ -46,13 +49,32 @@ def get(batch, header_only=False):
             filter_fields = '&fields=batch_header'
         else:
             filter_fields = ''
+
         payout = my_api.request(
-            "https://api.sandbox.paypal.com/v1/payments/payouts/{}?total_required=true{}".format(batch.payout_batch_id,
+            "https://api.sandbox.paypal.com/v1/payments/payouts/{}?total_required=true{}".format(payout_batch_id,
                                                                                                  filter_fields),
             "GET", {})
 
         # payout = Payout.find(batch.payout_batch_id)
         return payout
 
-    except ResourceNotFound as error:
-        return 'error: nothing found! {}'.format(error)
+    except Exception as e:
+        return {'error_status': 'Failed',
+                'error': e}
+
+
+
+def get_payout_item(payout_item_id):
+    # TODO: delete this - for developing only
+    try:
+        paypalrestsdk.configure({
+            "mode": "sandbox",  # sandbox or live
+            "client_id": "AX3_V5iIbPLsEa_71d-pbfN2InBlMQPxTKqtwTMd1YxUxjxeIay75W6akP1ikLQ-4TpHMOoW7S-e5LOc",
+            "client_secret": "EDuF-9rMsyA0PukAJ2BGNZingJ0GGsYoJ67hWTzRB9VtaBnaLRPLKSpYoIy25NjxEHZXZ7lYdZPh8v1B"})
+
+        payout_item = PayoutItem.find(payout_item_id)
+        return payout_item
+
+    except Exception as e:
+        return {'error_status': 'Failed',
+                'error': e}

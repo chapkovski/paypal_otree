@@ -5,52 +5,42 @@
 {% endblock %}
 
 {% block content %}
+    {% if error %}
+        <div class="alert alert-danger" role="alert">
+            Can't update the status: check PayPal credentials and connection
+        </div>
+    {% endif %}
     <div class="card">
 
         <div class="card-body">
             {{ batch_info }}
             <h5 class="card-title">Batch info:</h5>
-            <p class="card-text">{{ object.pk }}</p>
-            <p class="card-text">{{ object.total_amount }}</p>
-            <p class="card-text">{{ object.batch_status }}</p>
-            <p class="card-text">.</p>
+            <ul class="list-group">
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Number of receivers
+                    <span class="badge badge-primary badge-pill">{{ batch.total_items }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Total amount
+                    <span class="badge badge-primary badge-pill">{{ batch.total_amount }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Total fees
+                    <span class="badge badge-primary badge-pill">{{ batch.total_fees }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Batch status
+                    <span class="badge {{ batch_css_class }} badge-pill">{{ batch.batch_status }}</span>
+                </li>
+            </ul>
 
         </div>
     </div>
-    AAAA {% for p in ppps %} {{ p.transaction_status }} /// {{ p.payout_item_id }}  {% endfor %}
-    <table class="table table-hover table-striped table-responsive">
-        <thead>
-        <tr>
-            <th>Participant code:</th>
-            <th>Amount to pay:</th>
-            <th>E-mail:</th>
-            <th>To pay:</th>
-            <th>Payment status:</th>
-            <th>Batch ID</th>
-            <th></th>
 
-
-        </tr>
-        </thead>
-        {% for p in ppp %}
-            <tr>
-                <td>{{ form.instance.participant.code }}</td>
-                <td>{{ form.instance.amount }}</td>
-                <td>{{ form.instance.email }}</td>
-                <td>{% formfield form.to_pay label=" " %}               {% for hidden in form.hidden_fields %}
-                    {{ hidden }}
-                {% endfor %}</td>
-                <td>{{ form.instance.get_inner_status_display }}</td>
-                <td>{{ form.instance.batch.sender_batch_id }}</td>
-                <td><a href="{% url 'edit_ppp' form.instance.pk %}" role="button"
-                       class="btn btn-sm btn-dark">Edit</a></td>
-
-            </tr>
-        {% endfor %}
-    </table>
+    {%  include 'paypal_ext/includes/ppp_table.html' %}
     <a href="{% url 'linked_sessions_list' %}" class="btn btn-info btn-lg " role="button">Back</a>
-    <button type="submit" class="btn btn-success btn-lg">Submit</button>
-    </form>
+
+
 {% endblock %}
 
 {% block internal_styles %}

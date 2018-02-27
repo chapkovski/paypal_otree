@@ -4,6 +4,9 @@ from django.dispatch import receiver
 from otree.api import models
 from random import randint
 import string
+import paypal_ext.paypal as paypal
+import json
+import ast
 
 author = 'Philip Chapkovski'
 
@@ -20,7 +23,12 @@ from django.core.exceptions import ObjectDoesNotExist
 
 # if a batch has one of these statuses, we don't update them anymore requesting info
 # via paypal, because it doesn't make sense, they are finalized.
-BATCH_IGNORED_STATUSES = ['SUCCESS', 'DENIED']
+# TODO: NB! correct it after debugging
+# TODO: the problem with this approach is that status of batch can be success, but statuses of payout items can
+# TODO: change later: from unclaimed to paid, or returned
+BATCH_IGNORED_STATUSES = ['1SUCCESS', '1DENIED']
+PPP_IGNORED_STATUSES = ['1SUCCESS', '1DENIED']
+
 
 def generate_random_string(stringlength=12):
     rstring = ''.join(
@@ -82,27 +90,37 @@ class Batch(djmodels.Model):
     info = models.LongStringField(doc='to store info received from paypal.get()')
     batch_status = models.StringField(doc='an extenral status received from paypal')
     total_amount = models.FloatField(doc='total amount of batch (taken from paypal.get()')
+    total_items = models.IntegerField(doc='total number of items (taken from paypal.get()')
+    total_fees = models.FloatField(doc='total amount of fees (taken from paypal.get()')
 
-    def count_recipients(self):
-        print("AAAAA", len(self.payouts.all()))
-        return self.payouts.all().count()
+    def update_status(self):
+        if self.payout_batch_id == '':
+            return False
+        if self.batch_status not in BATCH_IGNORED_STATUSES:
+            info = paypal.get(self.payout_batch_id)
 
-    def update_status(self, info):
-        self.info = str(info)
-        header = info['batch_header']
-        items = info['items']
-        self.batch_status = header['batch_status']
-        self.total_amount = float(header['amount']['value'])
-        self.save()
-        for item in items:
-            payout_item_id = item['payout_item_id']
-            transaction_status = item['transaction_status']
-            email = item['payout_item']['receiver']
-            sender_item_id = item['payout_item']['sender_item_id']
-            self.payouts.filter(email=email,
-                                sender_item_id=sender_item_id).update(transaction_status=transaction_status,
-                                                                      payout_item_id=payout_item_id)
+            if 'error_status' not in info:
+                self.info = json.dumps(info)
+                header = info['batch_header']
+                items = info['items']
+                self.batch_status = header['batch_status']
+                self.total_amount = float(header['amount']['value'])
+                self.total_fees = float(header['fees']['value'])
+                self.total_items = len(items)
+                self.save()
+                for item in items:
+                    payout_item_id = item['payout_item_id']
+                    transaction_status = item['transaction_status']
+                    email = item['payout_item']['receiver']
+                    sender_item_id = item['payout_item']['sender_item_id']
+                    self.payouts.filter(email=email,
+                                        sender_item_id=sender_item_id).update(transaction_status=transaction_status,
+                                                                              payout_item_id=payout_item_id,
+                                                                              info=item)
 
+                return True
+            else:
+                return False
 
     # TODO: add the field inner_status to distinguish between non-sent, failed, and succesffuly sent batches
 
@@ -148,6 +166,7 @@ class PayPalPayout(djmodels.Model):
     paid = models.BooleanField(doc='paid, inner status PAID',
                                initial=False)
     sender_item_id = models.StringField(blank=True, doc='sent id to paypal', )
+    info = models.LongStringField(doc='to store info received from paypal.get_payout()')
 
     def get_absolute_url(self):
         return self.participant._url_i_should_be_on()
@@ -168,6 +187,19 @@ class PayPalPayout(djmodels.Model):
             "note": "Thank you.",
             "sender_item_id": self.sender_item_id
         }
+
+    def update_status(self):
+        if self.payout_item_id == '':
+            return False
+        if self.transaction_status not in PPP_IGNORED_STATUSES:
+            updated_info = paypal.get_payout_item(self.payout_item_id)
+            if 'error_status' not in updated_info:
+                self.info = str(updated_info)
+                self.transaction_status = updated_info['transaction_status']
+                self.save()
+                return True
+            else:
+                return False
 
 
 # This is to guarantee that linked session will never be deleted if there is at least one ppp in status **NOT**

@@ -2,17 +2,19 @@ from . import models, forms
 import vanilla
 from django.core.urlresolvers import reverse_lazy, reverse
 from .forms import SessionCreateForm, PPPFormSet
-from django.views.generic.edit import CreateView, FormView, DeleteView
+from django.views.generic.edit import CreateView, FormView, DeleteView, UpdateView
 from django.views.generic.detail import DetailView
 from django.views.generic.list import ListView
 from .models import (PayPalPayout as PPP, BATCH_STATUSES, PPP_STATUSES, generate_random_string, FailedBatch, Batch,
-                     BATCH_IGNORED_STATUSES)
+                     BATCH_IGNORED_STATUSES, PPP_IGNORED_STATUSES)
 from django.db import transaction
 import random
 import string
+import json
 import paypal_ext.conf as conf
 import paypal_ext.paypal as paypal
 from django.db.models import Q
+import ast
 
 debug_emails = ['chapkovksi@gmail.com', 'anna.s.ivanova@gmail.com']
 
@@ -162,12 +164,47 @@ class DisplayLinkedSessionView(FormView):
             return self.form_invalid(form)
 
 
-class PPPUpdateView(vanilla.UpdateView):
-    template_name = 'paypal_ext/EditPPP.html'
-    url_name = 'edit_ppp'
+# to show the card of  a single processed payout item
+class PPPDetailView(DetailView):
+    template_name = 'paypal_ext/PPPDetail.html'
+    url_name = 'ppp_detail'
     url_pattern = r'^ppp/(?P<pk>[a-zA-Z0-9_-]+)/$'
     model = models.PayPalPayout
+    context_object_name = 'ppp'
+
+    def get_queryset(self):
+        #     override queryset to guarantee jic that no ppp with other status than NOT PAID will ever be edited
+        return self.model.objects.exclude(transaction_status='NOT PAID')
+
+    def get_success_url(self):
+        return reverse('list_ppp_records', kwargs={'pk': self.object.linked_session.pk})
+
+    def get_context_data(self, **kwargs):
+        ppp = self.get_object()
+        updated = ppp.update_status()
+        context = super().get_context_data(**kwargs)
+        context['error'] = not updated
+        if ppp.info is not None:
+            info = ast.literal_eval(ppp.info)
+            context['payout_item_id'] = info['payout_item_id']
+            context['transaction_status'] = info['transaction_status']
+            context['payout_item_fee'] = info['payout_item_fee']['value']
+            context['amount'] = info['payout_item']['amount']['value']
+            context['receiver'] = info['payout_item']['receiver']
+            context['time_processed'] = info.get('time_processed', '')
+        return context
+
+
+class PPPUpdateView(UpdateView):
+    template_name = 'paypal_ext/EditPPP.html'
+    url_name = 'edit_ppp'
+    url_pattern = r'^ppp/(?P<pk>[a-zA-Z0-9_-]+)/edit$'
+    model = models.PayPalPayout
     form_class = forms.PPPUpdateForm
+
+    def get_queryset(self):
+        #     override queryset to guarantee jic that no ppp with other status than NOT PAID will ever be edited
+        return self.model.objects.filter(transaction_status='NOT PAID')
 
     def get_success_url(self):
         return reverse('list_ppp_records', kwargs={'pk': self.object.linked_session.pk})
@@ -206,16 +243,28 @@ class BatchDetailView(DetailView):
     url_name = 'batch_detail'
     url_pattern = r'^batch/(?P<pk>[a-zA-Z0-9_-]+)/$'
     model = models.Batch
+    context_object_name = 'batch'
 
     def get_context_data(self, **kwargs):
         batch = self.get_object()
         context = super().get_context_data(**kwargs)
         ppps = self.object.payouts.all()
-        if batch.batch_status not in BATCH_IGNORED_STATUSES:
-            updated_batch_info = paypal.get(batch)
-            batch.update_status(updated_batch_info)
+        updated = batch.update_status()
+        print('AAAA', updated)
+        if batch.batch_status == 'SUCCESS':
+            batch_css_class = 'badge-success'
+        elif batch.batch_status == 'DENIED':
+            batch_css_class = 'badge-danger'
+        else:
+            batch_css_class = 'badge-secondary'
+        # excluding does not make particular sense here because really batch cannot be created for
+        # not paid ppp
+        processed_ppps = batch.payouts.exclude(transaction_status='NOT PAID')
         context.update({'ppps': ppps,
-                        'batch_info': batch.info})
+                        'error': not updated,
+                        'batch_css_class': batch_css_class,
+                        'processed_payments': processed_ppps,
+                        })
         return context
 
 

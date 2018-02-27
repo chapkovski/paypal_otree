@@ -23,7 +23,7 @@
 
 
             {{ ppp_formset.management_form }}
-            <table class="table table-hover table-striped table-responsive">
+            <table class="table table-hover table-striped ">
                 <thead>
                 <tr>
                     <th>Participant code:</th>
@@ -37,8 +37,6 @@
                         </label>
 
                     </th>
-                    <th>Payment status:</th>
-                    <th>Batch ID</th>
                     <th></th>
 
 
@@ -52,8 +50,6 @@
                         <td>{% formfield form.to_pay label=" " %}               {% for hidden in form.hidden_fields %}
                             {{ hidden }}
                         {% endfor %}</td>
-                        <td>{{ form.instance.transaction_status }}</td>
-                        <td>{{ form.instance.batch.sender_batch_id }}</td>
                         <td><a href="{% url 'edit_ppp' form.instance.pk %}" role="button"
                                class="btn btn-sm btn-dark">Edit</a></td>
 
@@ -65,7 +61,10 @@
             <button type="submit" class="btn btn-success btn-lg btn-pay" disabled>Pay</button>
         </form>
     {% endif %}
-    {{ processed_payments }}
+
+
+
+    {%  include 'paypal_ext/includes/ppp_table.html' %}
 {% endblock %}
 
 {% block internal_styles %}
@@ -92,14 +91,15 @@
             });
             // if all checkboxes are selected check also "checkAll" checkbox
             $('input.' + checkName).change(function () {
-                var length_all_checked =$("input." + checkName + ":checked").length;
+                var length_all_checked = $("input." + checkName + ":checked").length;
                 var check = (length_all_checked == $("input." + checkName).length);
                 $("input[name=" + checkAllName + "]").prop('checked', check);
-                if (length_all_checked>0) {
-                    $('button.btn-pay').prop( "disabled", false );
+                if (length_all_checked > 0) {
+                    $('button.btn-pay').prop("disabled", false);
                 } else {
-                    $('button.btn-pay').prop( "disabled", true );
-                };
+                    $('button.btn-pay').prop("disabled", true);
+                }
+                ;
             })
         }
     </script>
