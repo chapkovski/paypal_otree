@@ -1,7 +1,7 @@
 {% extends "otree/BaseAdmin.html" %}
 {% load staticfiles otree %}
 {% block title %}
-    Batch detail. Code {{ object.sender_batch_id }}
+
 {% endblock %}
 
 {% block content %}
@@ -14,7 +14,7 @@
 
         <div class="card-body">
             {{ batch_info }}
-            <h5 class="card-title">Batch info:</h5>
+            <h5 class="card-title">Batch {{ object.payout_batch_id }}:</h5>
             <ul class="list-group">
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     Number of receivers

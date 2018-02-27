@@ -15,6 +15,7 @@ import paypal_ext.conf as conf
 import paypal_ext.paypal as paypal
 from django.db.models import Q
 import ast
+from django.views.generic.edit import FormMixin
 
 debug_emails = ['chapkovksi@gmail.com', 'anna.s.ivanova@gmail.com']
 
@@ -89,9 +90,11 @@ class ListBatchesView(vanilla.ListView):
 
 # to process payments (based on PPP model). inline formset
 #  based on Linked Session as parent object, and PPPs as children
-class DisplayLinkedSessionView(FormView):
+class DisplayLinkedSessionView(DetailView, FormMixin):
     template_name = 'paypal_ext/LinkedSession.html'
     form_class = forms.EmptyForm
+    context_object_name = 'linked_session'
+    model = models.LinkedSession
 
     def get_success_url(self):
         if self.successful_batch:
@@ -100,18 +103,20 @@ class DisplayLinkedSessionView(FormView):
             return reverse_lazy('linked_sessions_list')
 
     def get_context_data(self, **kwargs):
+        self.object = self.get_object()
+        linked_session = self.get_object()
         context = super().get_context_data(**kwargs)
-        linked_session = models.LinkedSession.objects.get(pk=self.kwargs['pk'])
+
         q = linked_session.payouts.filter(transaction_status='NOT PAID').exclude(
             Q(email__isnull=True) | Q(email__exact='') | Q(amount__isnull=True))
         processed_ppps = linked_session.payouts.exclude(transaction_status='NOT PAID')
-        context.update({'linked_session': linked_session,
-                        'ppp_formset': PPPFormSet(self.request.POST or None,
-                                                  instance=linked_session,
-                                                  queryset=q),
-                        'processed_payments': processed_ppps,
-                        'to_process_payments': q,
-                        })
+        context.update({
+            'ppp_formset': PPPFormSet(self.request.POST or None,
+                                      instance=linked_session,
+                                      queryset=q),
+            'processed_payments': processed_ppps,
+            'to_process_payments': q,
+        })
         return context
 
     def form_invalid(self, form):

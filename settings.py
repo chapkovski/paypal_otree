@@ -5,9 +5,15 @@ import dj_database_url
 
 import otree.settings
 
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-EXTENSION_APPS=['paypal_ext']
+EXTENSION_APPS = ['paypal_ext']
+# TODO: in live: uncomment following because it is not safe to use codes directly here
+# PAYPAL_CLIENT_ID = os.environ["PAYPAL_CLIENT_ID"]
+# PAYPAL_CLIENT_SECRET = os.environ["PAYPAL_CLIENT_SECRET"]
+PAYPAL_MODE = 'sandbox'  # sandbox or live
+PAYPAL_CLIENT_ID = "AX3_V5iIbPLsEa_71d-pbfN2InBlMQPxTKqtwTMd1YxUxjxeIay75W6akP1ikLQ-4TpHMOoW7S-e5LOc"
+PAYPAL_CLIENT_SECRET = "EDuF-9rMsyA0PukAJ2BGNZingJ0GGsYoJ67hWTzRB9VtaBnaLRPLKSpYoIy25NjxEHZXZ7lYdZPh8v1B"
+
 # the environment variable OTREE_PRODUCTION controls whether Django runs in
 # DEBUG mode. If OTREE_PRODUCTION==1, then DEBUG=False
 if environ.get('OTREE_PRODUCTION') not in {None, '', '0'}:
@@ -53,11 +59,9 @@ AUTH_LEVEL = environ.get('OTREE_AUTH_LEVEL')
 AWS_ACCESS_KEY_ID = environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = environ.get('AWS_SECRET_ACCESS_KEY')
 
-
 # e.g. EUR, CAD, GBP, CHF, CNY, JPY
 REAL_WORLD_CURRENCY_CODE = 'USD'
 USE_POINTS = True
-
 
 # e.g. en, de, fr, it, ja, zh-hans
 # see: https://docs.djangoproject.com/en/1.9/topics/i18n/#term-language-code
@@ -79,7 +83,7 @@ mturk_hit_settings = {
     'frame_height': 500,
     'preview_template': 'global/MTurkPreview.html',
     'minutes_allotted_per_assignment': 60,
-    'expiration_hours': 7*24,  # 7 days
+    'expiration_hours': 7 * 24,  # 7 days
     # 'grant_qualification_id': 'YOUR_QUALIFICATION_ID_HERE',# to prevent retakes
     # to use qualification requirements, you need to uncomment the 'qualification' import
     # at the top of this file.
@@ -98,7 +102,6 @@ SESSION_CONFIG_DEFAULTS = {
     'mturk_hit_settings': mturk_hit_settings,
 }
 
-
 SESSION_CONFIGS = [
     {
         'name': 'testing_paypal',
@@ -107,6 +110,5 @@ SESSION_CONFIGS = [
         'app_sequence': ['testing_paypal'],
     }
 ]
-
 
 otree.settings.augment_settings(globals())
