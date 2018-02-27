@@ -1,29 +1,28 @@
 {% extends "otree/BaseAdmin.html" %}
 {% load staticfiles %}
 {% block title %}
-    List of batches for this session
+    List of batches for the session {{ ls }}
 {% endblock %}
 
 {% block content %}
-{# TODO: Edit all that crap #}
-{{ infoall }}
+
     {% if object_list %}
         <table class="table table-hover table-striped">
         <thead>
-        <th>sender_batch_id</th>
+
         <th>payout_batch_id</th>
         <th>total_amount</th>
         <th>batch_status</th>
         <th>number of recipients</th>
         </thead>
             <tbody>
-            {% for batch in object_list %}
+            {% for batch in batches %}
                 <tr>
-                    <td><a href="{% url 'batch_detail' batch.pk %}">{{ batch.sender_batch_id }}</a></td>
+
                     <td><a href="{% url 'batch_detail' batch.pk %}">{{ batch.payout_batch_id }}</a></td>
                     <td>{{ batch.total_amount}}</td>
                     <td>{{ batch.batch_status}}</td>
-                    <td>{{ batch.count_recipients}}</td>
+                    <td>{{ batch.total_items}}</td>
                 </tr>
             {% endfor %}
             </tbody>
@@ -31,6 +30,8 @@
     {% else %}
         <li>No batches yet for this session.</li>
     {% endif %}
+        <a href="{% url 'linked_sessions_list' %}" class="btn btn-info btn-lg " role="button">Back</a>
+
 {% endblock %}
 
 {% block internal_styles %}

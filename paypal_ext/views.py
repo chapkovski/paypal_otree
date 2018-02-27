@@ -88,8 +88,6 @@ class EntryPointView(vanilla.View):
 
 
 # to show list of processed batches.
-class ListBatchesView(vanilla.ListView):
-    ...
 
 
 # to process payments (based on PPP model). inline formset
@@ -229,6 +227,7 @@ class BatchListView(ListView):
     url_name = 'batches'
     url_pattern = r'^linked_session/(?P<pk>[a-zA-Z0-9_-]+)/batches/$'
     model = models.Batch
+    context_object_name = 'batches'
 
     def get_queryset(self):
         objs = Batch.objects.filter(linked_session__pk=self.kwargs['pk'])
@@ -236,14 +235,17 @@ class BatchListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        batches = self.get_queryset()
-        infoall = []
+
+
+        context['ls'] =  models.LinkedSession.objects.get(pk=self.kwargs['pk']).session.code
+        # batches = self.get_queryset()
+        # infoall = []
         # TODO: update the batch statuses if not ignored
         # TODO (they are requested but not updated now) which is weird
-        for b in batches:
-            if b.batch_status not in BATCH_IGNORED_STATUSES:
-                infoall.append(paypal.get(b, header_only=True))
-        context['infoall'] = infoall
+        # for b in batches:
+        #     if b.batch_status not in BATCH_IGNORED_STATUSES:
+        #         infoall.append(paypal.get(b, header_only=True))
+        # context['infoall'] = infoall
         return context
 
 
