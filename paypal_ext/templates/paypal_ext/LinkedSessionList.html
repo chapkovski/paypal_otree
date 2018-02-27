@@ -1,38 +1,62 @@
 {% extends "otree/BaseAdmin.html" %}
-{% load staticfiles  %}
+{% load staticfiles %}
 {% block title %}
-List of linked sessions
+    List of linked sessions
 {% endblock %}
 
 {% block content %}
 
-<ul>
+    {% if sessions_to_link %}
+        <div class="mb-3">
+            <a class="btn btn-primary" href="{% url 'create_linked_session' %}" role="button">Link new session</a>
+        </div>
+    {% endif %}
 
-    <a class="btn btn-primary" href="{% url 'create_linked_session' %}" role="button">Link new session</a>
-</ul>
+    {% if  linked_sessions %}
+        <table class="table table-hover table-striped">
+            <thead>
+            <tr>
+                <th>Session code</th>
+                <th>N. participants</th>
+                <th>Total amount</th>
+                <th>Payment processed</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for ls in linked_sessions %}
+                <tr>
+                    <td><a href="{% url 'list_ppp_records' ls.pk %}">{{ ls.session.code }} </a>
+                    </td>
+                    <td>{{ ls.num_parts }}</td>
+                    <td>{{ ls.total_amount }}</td>
+                    <td>{{ ls.payment_processed|yesno:'Yes, No' }}
+                        {% if  ls.payment_processed %}
+                            (See <a href="{% url 'batches' ls.pk %}">batches</a>)
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if not ls.payment_processed %}
+                            <div class="float-right">
+                                <a class="btn btn-sm btn-danger" role="button"
+                                   href="{% url 'delete_linked_session' ls.pk %}">Delete
+                                    link to session</a>
+                            </div>
+                        {% endif %}
+                    </td>
 
-
-{% if object_list %}
-<table class="table table-hover table-striped">
-    <tbody>
-    {% for linked_session in object_list %}
-    <tr>
-        <td><a href="{% url 'list_ppp_records' linked_session.pk %}">{{linked_session.session.code}} </a></td>
-        <td><a class="btn btn-sm btn-danger" role="button" href="{% url 'delete_linked_session' linked_session.pk %}">Delete
-            link to session</a></td>
-
-    </tr>
-    {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<li>No linked sessions yet.</li>
-{% endif %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <li>No linked sessions yet.</li>
+    {% endif %}
 {% endblock %}
 
 {% block internal_styles %}
 
-{{ block.super }}
+    {{ block.super }}
 
 {% endblock %}
 

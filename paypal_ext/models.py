@@ -64,6 +64,18 @@ BATCH_STATUSES = AttrDict(batch_statutses_dict)
 class LinkedSession(djmodels.Model):
     session = djmodels.OneToOneField(to=Session, on_delete=djmodels.CASCADE)
 
+    @property
+    def total_amount(self):
+        return sum([p.payoff_in_real_world_currency() for p in self.session.get_participants()])
+
+    @property
+    def num_parts(self):
+        return len(self.session.get_participants())
+
+    @property
+    def payment_processed(self):
+        return self.batch_set.exists()
+
 
 class FailedBatch(djmodels.Model):
     error_message = models.LongStringField(blank=True, null=True, doc='to store errors from paypal')

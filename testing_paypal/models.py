@@ -3,17 +3,13 @@ from otree.api import (
     Currency as c, currency_range
 )
 
-
+import random
 author = 'Your name here'
 from paypal_ext.models import  PPP_STATUSES
 doc = """
 Your app description
 """
 
-class BATCH_STATUSES(BaseConstants):
-    UNPROCESSED = 0
-    SUCCESS = 1
-    FAILED = 2
 
 class Constants(BaseConstants):
     name_in_url = 'testing_paypal'
@@ -22,7 +18,9 @@ class Constants(BaseConstants):
 
 
 class Subsession(BaseSubsession):
-    pass
+    def creating_session(self):
+        for p in self.get_players():
+            p.payoff =random.randint(1,10)
 
 
 class Group(BaseGroup):

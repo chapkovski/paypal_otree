@@ -15,7 +15,7 @@
         {% csrf_token %}
         <p>Are you sure you want to delete "{{ object.session.code }}"?</p>
         <p>This action is irreversible!</p>
-        <a href="{% url 'linked_sessions_list' %}" class="btn btn-default btn-lg " role="button">Cancel</a>
+        <a href="{% url 'linked_sessions_list' %}" class="btn btn-outline-dark btn-lg " role="button">Cancel</a>
         <button type="submit" class="btn btn-success btn-lg active">Delete linked session</button>
     </form>
 

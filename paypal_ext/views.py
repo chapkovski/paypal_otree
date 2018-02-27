@@ -16,7 +16,7 @@ import paypal_ext.paypal as paypal
 from django.db.models import Q
 import ast
 from django.views.generic.edit import FormMixin
-
+from otree.models import Session
 debug_emails = ['chapkovksi@gmail.com', 'anna.s.ivanova@gmail.com']
 
 '''
@@ -76,7 +76,11 @@ class ListLinkedSessionsView(vanilla.ListView):
     url_pattern = r'^linked_sessions/$'
     display_name = 'Linked sessions management for Paypal payments'
     model = models.LinkedSession
-
+    context_object_name = 'linked_sessions'
+    def get_context_data(self, **kwargs):
+        context=super().get_context_data(**kwargs)
+        context['sessions_to_link'] = Session.objects.filter(linkedsession__isnull=True).exists()
+        return context
 
 # what is shown to the participants who start the study (to collect their emails for future payments).
 class EntryPointView(vanilla.View):

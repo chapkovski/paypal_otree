@@ -1,17 +1,11 @@
 {% extends "otree/BaseAdmin.html" %}
 {% load staticfiles otree %}
 {% block title %}
-    PPP objects for session {{ linked_session.session.code }}
+    Link to session {{ linked_session.session.code }}. Payments via PayPal
 {% endblock %}
 
 {% block content %}
-    <div><h1>Batches:</h1>
-        <a href="{% url 'batches' linked_session.pk %}" role="button" class="btn btn-lg btn-info">Get all batches for
-            this session</a>
-        <a href="{% url 'linked_sessions_list' %}" class="btn btn-success btn-lg " role="button">Back to linked
-            sessions</a>
-    </div>
-
+    <h4>Payments to make:</h4>
     {% if to_process_payments %}
         <form action="" method="post">
             {% csrf_token %}
@@ -30,12 +24,13 @@
                     <th>Amount to pay:</th>
                     <th>E-mail:</th>
                     <th width="100px">
-                        To pay
-                        <label>
-                            <input name="checkAll" type="checkbox"
-                                   value="">
-                        </label>
-
+                        <div class="float-right">
+                            To pay
+                            <label>
+                                <input name="checkAll" type="checkbox"
+                                       value="">
+                            </label>
+                        </div>
                     </th>
                     <th></th>
 
@@ -47,27 +42,59 @@
                         <td>{{ form.instance.participant.code }}</td>
                         <td>{{ form.instance.amount }}</td>
                         <td>{{ form.instance.email }}</td>
-                        <td>{% formfield form.to_pay label=" " %}               {% for hidden in form.hidden_fields %}
-                            {{ hidden }}
-                        {% endfor %}</td>
+                        <td>
+                            <div class="float-right">{% formfield form.to_pay label=" " %}
+                                {% for hidden in form.hidden_fields %}
+                                    {{ hidden }}
+                                {% endfor %}
+                            </div>
+                        </td>
                         <td><a href="{% url 'edit_ppp' form.instance.pk %}" role="button"
                                class="btn btn-sm btn-dark">Edit</a></td>
 
                     </tr>
                 {% endfor %}
             </table>
-            <a href="{% url 'linked_sessions_list' %}" class="btn  btn-lg btn-outline-dark " role="button">Cancel</a>
-            <button type="submit" class="btn btn-success btn-lg btn-pay" disabled>Pay</button>
+
+            <div class="row">
+                <div class="col">
+                    <div class="btn-group float-right mb-3" role="group" aria-label="Payment">
+                        <a href="{% url 'linked_sessions_list' %}" class="btn  btn-lg btn-outline-dark "
+                           role="button">Cancel</a>
+                        <button type="submit" class="btn  btn-lg btn-pay float-right  btn-success" disabled>Pay</button>
+
+
+                    </div>
+                </div>
+            </div>
         </form>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            All payments have been already made.
+        </div>
     {% endif %}
-
-
-
-    {%  include 'paypal_ext/includes/ppp_table.html' %}
+    <div class="row">
+        <div class="col">
+            <h4>Payments already made:</h4>
+        </div>
+    </div>
+    {% if processed_payments %}
+    {% include 'paypal_ext/includes/ppp_table.html' %}
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            No payments have been made so far.
+        </div>
+    {% endif %}
+     <a href="{% url 'linked_sessions_list' %}" class="btn  btn-lg btn-outline-dark "
+                           role="button">Back</a>
 {% endblock %}
 
 {% block internal_styles %}
-
+    <style>
+        .btn-pay {
+            border: solid 1px black !important;
+        }
+    </style>
     {{ block.super }}
 
 {% endblock %}
