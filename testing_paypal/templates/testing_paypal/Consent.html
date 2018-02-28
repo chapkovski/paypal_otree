@@ -1,0 +1,84 @@
+{% extends "global/Page.html" %}
+{% load staticfiles otree_tags %}
+
+{% block title %}
+    Informed Consent Information
+{% endblock %}
+
+{% block content %}
+    <div style="margin-bottom: 20px;">We (Nuffield CESS) are a group of researchers based in University of Oxford,
+        United Kingdom. We have partnered with an economic research organisation (Oxera) to conduct a study into
+        retirement decisions. The data collected in this survey will only be used for the purposes of the study, and
+        your privacy and anonymity will be maintained.
+    </div>
+
+    <div style="margin-bottom: 20px;">It is very important for the success of our research project that you complete the
+        survey until the end, once you have started. This survey should take on average about 25 minutes to complete.
+    </div>
+
+    <div class="disc">Please read the following statements carefully and answer the question below.</div>
+
+    <div style="margin: 25px 5%; padding: 20px; border: 2px solid currentColor; width: 90%;"><strong>Our Commitments and
+        Privacy Policy</strong><br/>
+        &nbsp;<br/>
+        In this survey, some of retirement scenarios and some of information you are presented with will be hypothetical
+        but designed to be similar to information and situations you could encounter in the real world. This
+        implies:<br/>
+        &nbsp;
+        <ul>
+            <li>We never deceive participants. For example, if we give you a quiz about prior information that has been
+                presented to you, we will only use that prior information to assess whether your answer is correct or
+                not.
+            </li>
+            <li>We keep our promises made to participants. For example, if we promise a certain payment, participants
+                will indeed receive it.
+            </li>
+            <li>In the event that we are responsible for a mistake that is to the disadvantage of participants, we will
+                inform and compensate the respective participants.
+            </li>
+            <li>We design, conduct and report our research in accordance with recognized scientific standards and
+                ethical principles.
+            </li>
+        </ul>
+        &nbsp; We adhere to the terms of our privacy policy as stated below.<br/>
+        &nbsp;
+        <ul>
+            <li>The data in the participants&rsquo; database will only be used for the purpose of the study (to explore
+                retirement decisions)
+            </li>
+            <li>There is no link between the personal data in the participants&rsquo; database and the data collected
+                during a study.
+            </li>
+            <li>The generated anonymous data will be used to write a report and to give presentations. The end products
+                will be publicly available.
+            </li>
+            <li>Your participation in this study is purely voluntary, and you may withdraw your participation or your
+                data at any time without any penalty to you.&nbsp;
+            </li>
+        </ul>
+    </div>
+
+    <p>Notes: If you have any questions about this study, you may contact us at cess@nuffield.ox.ac.uk</p>
+
+    <p class='red'>
+        <label for="id_consent">
+            <i> {{ form.consent }}
+                I acknowledge that I have read the rules and privacy policy, I
+                certify I am 18 years of age or older, and I agree that my registration in
+                the subject pool is voluntary.</i>
+        </label>
+    </p>
+
+    {% next_button %}
+
+
+
+{% endblock %}
+{% block styles %}
+    <style>
+        .red {
+            color: red;
+        }
+    </style>
+
+{% endblock %}

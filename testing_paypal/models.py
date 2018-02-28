@@ -26,6 +26,34 @@ class Subsession(BaseSubsession):
 class Group(BaseGroup):
     pass
 
-
+from django import forms as djforms
 class Player(BasePlayer):
-    testchoices=models.IntegerField(choices=PPP_STATUSES.choices)
+    consent = models.BooleanField(widget=djforms.CheckboxInput,
+                                  initial=False
+                                  )
+    gender = models.CharField(verbose_name='Gender', choices=['Male', 'Female', 'Other'],
+                              widget=widgets.RadioSelectHorizontal, )
+    nationality = models.CharField(verbose_name='Nationality', choices=['US', 'Other'],
+                                   widget=widgets.RadioSelectHorizontal, )
+    nationality_other = models.CharField(verbose_name='', blank=True)
+    race_ethnicity = models.CharField(verbose_name='Race/Ethnicity',
+                                      choices=['African American/African/Black/Caribbean',
+                                               'Asian/Pacific Islander',
+                                               'Caucasian',
+                                               'Hispanic/Latino',
+                                               'Native American',
+                                               'Other',
+                                               'Prefer not to answer '
+                                               ],
+                                      widget=widgets.RadioSelect, )
+
+
+    year_in_college = models.CharField(verbose_name='If you are currently in school, what year are you in?', choices=[
+        'Freshman/First-Year ',
+        'Sophomore',
+        'Junior',
+        'Senior',
+        'Graduate Student',
+        'Other'
+    ],
+                                       blank=True)

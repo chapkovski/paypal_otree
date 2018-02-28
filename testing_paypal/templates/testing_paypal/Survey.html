@@ -1,0 +1,26 @@
+{% extends "global/Page.html" %}
+{% load staticfiles otree_tags %}
+
+{% block title %}
+    Results
+{% endblock %}
+
+{% block content %}
+    <div>To help us with our research, please answer a few questions about yourself. You may leave any question blank
+        that you do not wish to answer, but complete responses are very helpful for our research agenda.
+    </div>
+    {% formfield player.gender %}
+    {% formfield player.nationality %}
+
+    {% formfield player.race_ethnicity %}
+
+
+    {% formfield player.year_in_college %}
+
+    {% next_button %}
+
+{% endblock %}
+
+{% block styles %}
+
+{% endblock %}
