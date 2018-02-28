@@ -1,5 +1,7 @@
 from django.conf.urls import url, include
 from paypal_ext import views as v
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
 
 urlpatterns = [url(r'^linkedsession/(?P<pk>[a-zA-Z0-9_-]+)/delete/$', v.DeleteLinkedSessionView.as_view(),
                    name='delete_linked_session'),
@@ -11,6 +13,13 @@ urlpatterns = [url(r'^linkedsession/(?P<pk>[a-zA-Z0-9_-]+)/delete/$', v.DeleteLi
 
 
 view_classes = [v.PPPUpdateView, v.BatchDetailView, v.BatchListView, v.PPPDetailView]
+
+# to protect if auth level
 for ViewCls in view_classes:
-    urlpatterns.append(url(ViewCls.url_pattern, ViewCls.as_view(), name=ViewCls.url_name))
+    if settings.AUTH_LEVEL in {'DEMO', 'STUDY'}:
+        as_view = login_required(ViewCls.as_view())
+    else:
+        as_view = ViewCls.as_view()
+        urlpatterns.append(url(ViewCls.url_pattern, as_view, name=ViewCls.url_name))
+
 
