@@ -17,6 +17,7 @@ from django.db.models import Q
 import ast
 from django.views.generic.edit import FormMixin
 from otree.models import Session
+
 debug_emails = ['chapkovksi@gmail.com', 'anna.s.ivanova@gmail.com']
 
 '''
@@ -32,13 +33,17 @@ PPPs, and it doesn't make sense to delete them.
 
 
 '''
-
+# urlpatterns = [url(r'^linkedsession/create/$', v.CreateLinkedSessionView.as_view(),
+#                    name='create_linked_session'), ]
 
 class CreateLinkedSessionView(CreateView):
     model = models.LinkedSession
     form_class = SessionCreateForm
     template_name = 'paypal_ext/LinkedSessionCreate.html'
     success_url = reverse_lazy('linked_sessions_list')
+    url_name = 'create_linked_session'
+    url_pattern = r'^linkedsessions/create/$'
+
 
     def form_valid(self, form):
         #       we create here the corresponding PPP objects
@@ -58,6 +63,10 @@ class DeleteLinkedSessionView(DeleteView):
     model = models.LinkedSession
     template_name = 'paypal_ext/LinkedSessionDelete.html'
     success_url = reverse_lazy('linked_sessions_list')
+    url_name = 'delete_linked_session'
+    url_pattern = r'^linkedsession/(?P<pk>[a-zA-Z0-9_-]+)/delete/$'
+
+
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -77,10 +86,12 @@ class ListLinkedSessionsView(vanilla.ListView):
     display_name = 'Linked sessions management for Paypal payments'
     model = models.LinkedSession
     context_object_name = 'linked_sessions'
+
     def get_context_data(self, **kwargs):
-        context=super().get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context['sessions_to_link'] = Session.objects.filter(linkedsession__isnull=True).exists()
         return context
+
 
 # what is shown to the participants who start the study (to collect their emails for future payments).
 class EntryPointView(vanilla.View):
@@ -97,6 +108,8 @@ class DisplayLinkedSessionView(DetailView, FormMixin):
     form_class = forms.EmptyForm
     context_object_name = 'linked_session'
     model = models.LinkedSession
+    url_name = 'list_ppp_records'
+    url_pattern = r'^linkedsession/(?P<pk>[a-zA-Z0-9_-]+)/$'
 
     def get_success_url(self):
         if self.successful_batch:
@@ -236,8 +249,7 @@ class BatchListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-
-        context['ls'] =  models.LinkedSession.objects.get(pk=self.kwargs['pk']).session.code
+        context['ls'] = models.LinkedSession.objects.get(pk=self.kwargs['pk']).session.code
         # batches = self.get_queryset()
         # infoall = []
         # TODO: update the batch statuses if not ignored

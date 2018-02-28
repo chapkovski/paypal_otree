@@ -54,6 +54,8 @@ DATABASES = {
 # the full admin interface.
 
 AUTH_LEVEL = environ.get('OTREE_AUTH_LEVEL')
+#
+# AUTH_LEVEL = 'STUDY'
 
 # setting for integration with AWS Mturk
 AWS_ACCESS_KEY_ID = environ.get('AWS_ACCESS_KEY_ID')

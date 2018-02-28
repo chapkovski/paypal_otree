@@ -228,4 +228,4 @@ def check_if_ppp_paid(sender, instance, *args, **kwargs):
     for p in instance.payouts.all():
         if p.transaction_status != 'NOT PAID':
             raise PaidPPPExistsException('Can\'t delete the linked session with the processed payment')
-    print("MOTHERFUCKA YOU ARE DELEITING LINK ESSESION DAMN", args, kwargs)
+
